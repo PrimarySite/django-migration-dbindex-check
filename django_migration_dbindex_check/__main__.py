@@ -1,4 +1,4 @@
-from django_migration_dbindex_check.checker import DBIndexChecker
+from .checker import DBIndexChecker
 import sys
 
 if __name__ == '__main__':
