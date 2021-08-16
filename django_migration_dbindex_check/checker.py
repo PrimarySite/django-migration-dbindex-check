@@ -1,9 +1,9 @@
 """Checker for migrations files with a new db_index."""
 
 import ast
+import configparser
 import os
 from operator import itemgetter
-from pathlib import Path
 
 import parso
 
@@ -224,19 +224,37 @@ class DBIndexChecker:
 
         return errors
 
+    def get_config(self, project_root: str):
+        """Get any config from a '.migrations_check_config.cfg file."""
+        config = configparser.ConfigParser()
+
+        # Failed reads are ignored
+        full_path = os.path.join(os.getcwd(), project_root, "migrations_check.cfg")
+        config.read(full_path)
+        return config
+
     def check_project(self, project_root_dir: str):
         apps = self._walk_files(project_root_dir)
+        config = self.get_config(project_root_dir)
         errors = []
 
         for app in apps.keys():
             models = self._map_models(
                 app_dict=apps[app], root_path=os.getcwd(), strict_mode=False
             )
-            errors_new = self._analyse_models(models)
+
+            try:
+                ignore_before = config["DJANGO_MIGRATION_DBINDEX_CHECK"][app]
+            except KeyError:
+                ignore_before = 0
+
+            errors_new = self._analyse_models(models, int(ignore_before))
             for items in errors:
                 items["app"] = app
             errors += errors_new
 
         for error in errors:
-            print(f"A new db_index was added to field:{error['field']} in model:{error['model']} "
-                  f"in app:{error['app']}. This was added in migration {error['migration']}.")
+            print(
+                f"A new db_index was added to field:{error['field']} in model:{error['model']} "
+                f"in app:{error['app']}. This was added in migration {error['migration']}."
+            )
