@@ -1,7 +1,11 @@
 """Checker for migrations files with a new db_index."""
 
+import ast
 import os
 from operator import itemgetter
+from pathlib import Path
+
+import parso
 
 
 class DBIndexChecker:
@@ -52,3 +56,56 @@ class DBIndexChecker:
             apps_list[app_name]["migration_files"].sort(key=itemgetter(0))
 
         return apps_list
+
+    def _get_all_relevant_operations_nodes_for_file(self, file_path):
+        """Get all the classes within the operations list for a given file."""
+        relevant_nodes = []
+
+        with open(file_path) as file:
+            node = ast.parse(file.read())
+            classes = [n for n in node.body if isinstance(n, ast.ClassDef)]
+
+            for cls in classes:
+                # There should only be one of these per file, but loop anyway
+                if cls.name != "Migration":
+                    continue
+
+                # We're looking for two types of class, either migrations.CreateModel
+                # or migrations.AlterField. Check for both and parse each case
+                for assigns in [n for n in cls.body if isinstance(n, ast.Assign)]:
+                    if assigns.targets[0].id != "operations":
+                        continue
+
+                    return [
+                        x
+                        for x in assigns.value.elts
+                        if x.func.attr == "CreateModel" or x.func.attr == "AlterField"
+                    ]
+
+    def _map_models(self, app_dict: dict, root_path: str):
+        """
+        Re-create the models and fields from the migration files of a given app.
+
+        returns a dict of dicts:
+        {
+            model_name: {
+                "field_name": {
+                    is_index=True,   <- As of latest migration
+                    index_added=0031,   <- Migration numbe
+                },
+                ...
+            },
+            ...
+        }
+        """
+        models = {}
+
+        if "migration_files" not in app_dict.keys():
+            raise ValueError(
+                "There are no migrations files in this app. Have you passed the "
+                "all_apps dict instead of a specific app instance?"
+            )
+
+        for migration_file in app_dict["migration_files"]:
+            path = os.path.join(root_path, migration_file[1])
+            nodes = self._get_all_relevant_operations_nodes_for_file(path)
