@@ -2,7 +2,7 @@
 
 import ast
 import configparser
-import os
+import os, sys
 from operator import itemgetter
 
 import parso
@@ -249,12 +249,14 @@ class DBIndexChecker:
                 ignore_before = 0
 
             errors_new = self._analyse_models(models, int(ignore_before))
-            for items in errors:
+            for items in errors_new:
                 items["app"] = app
             errors += errors_new
 
         for error in errors:
             print(
                 f"A new db_index was added to field:{error['field']} in model:{error['model']} "
-                f"in app:{error['app']}. This was added in migration {error['migration']}."
+                f"in app:{error['app']}. This was added in migration {error['migration']}.",
+                file=sys.stderr
             )
+
