@@ -56,8 +56,4 @@ class TestChecker:
 
     def test_map_models(self):
         checker = DBIndexChecker()
-        apps = checker._walk_files("example_migrations")
-        for app in apps.keys():
-            checker._map_models(
-                app_dict=apps[app], root_path=os.getcwd(), strict_mode=False
-            )
+        checker.check_project("example_migrations")

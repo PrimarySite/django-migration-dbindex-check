@@ -115,7 +115,11 @@ class DBIndexChecker:
             models_dict[model_name.lower()] = fields
 
     def _alter_fields_to_models_dict(
-        self, models_dict: dict, alter_fields_list: list, migration_number: int, strict_mode: bool
+        self,
+        models_dict: dict,
+        alter_fields_list: list,
+        migration_number: int,
+        strict_mode: bool,
     ):
         """
         Use the AlterField instances to mutate the models_dict.
@@ -134,9 +138,9 @@ class DBIndexChecker:
             field_name = [
                 x.value.value for x in alter_field.keywords if x.arg == "name"
             ][0]
-            field_object = [
-                x.value for x in alter_field.keywords if x.arg == "field"
-            ][0]
+            field_object = [x.value for x in alter_field.keywords if x.arg == "field"][
+                0
+            ]
             is_index = self._check_for_db_index_in_field_object(field_object)
 
             try:
@@ -198,3 +202,41 @@ class DBIndexChecker:
             )
 
         return models
+
+    def _analyse_models(self, app_dict: dict, ignore_before: int = 0):
+        """
+        Check for new db indices after a given migration for app.
+
+        Returns a list of errors for new indeces.
+        """
+        errors = []
+        for model in app_dict.keys():
+            for field_name in app_dict[model].keys():
+                field = app_dict[model][field_name]
+                if field["is_index"] and int(field["index_added"]) >= ignore_before:
+                    errors.append(
+                        {
+                            "model": model,
+                            "field": field_name,
+                            "migration": field["index_added"],
+                        }
+                    )
+
+        return errors
+
+    def check_project(self, project_root_dir: str):
+        apps = self._walk_files(project_root_dir)
+        errors = []
+
+        for app in apps.keys():
+            models = self._map_models(
+                app_dict=apps[app], root_path=os.getcwd(), strict_mode=False
+            )
+            errors_new = self._analyse_models(models)
+            for items in errors:
+                items["app"] = app
+            errors += errors_new
+
+        for error in errors:
+            print(f"A new db_index was added to field:{error['field']} in model:{error['model']} "
+                  f"in app:{error['app']}. This was added in migration {error['migration']}.")
