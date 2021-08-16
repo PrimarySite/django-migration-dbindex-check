@@ -118,9 +118,14 @@ class DBIndexChecker:
         self, models_dict: dict, alter_fields_list: list, migration_number: int, strict_mode: bool
     ):
         """
-        Use the AlterField imstances to mutate the models_dict.
+        Use the AlterField instances to mutate the models_dict.
 
-        Strict mode is used here to determine whether to ignore potent
+        Strict mode is used here to determine whether to ignore potential broken migrations.
+        If strict mode is on and we find an AlterField but there is no field in the dict,
+        this will error.
+        If strict mode is off, we'll just act as if we're creating the field from scratch.
+        This helps for older codebases where migrations may have been corrupted.
+        Looking at you, CMS....
         """
         for alter_field in alter_fields_list:
             model_name = [
@@ -137,18 +142,24 @@ class DBIndexChecker:
             try:
                 models_dict[model_name][field_name]
             except KeyError:
-                if
-                raise KeyError(
-                    f"Cannot find the original model ({model_name}) or field ({field_name}) "
-                    f"which is being changed. This most likely means your migrations are broken."
-                )
+                if strict_mode:
+                    raise KeyError(
+                        f"Cannot find the original model ({model_name}) or field ({field_name}) "
+                        f"which is being changed. This most likely means your migrations are broken."
+                    )
+                else:
+                    # This is now a list of tuples, first element is field ID, second is model class
+                    models_dict[model_name][field_name.lower()] = {
+                        "is_index": is_index,
+                        "index_added": migration_number if is_index else False,
+                    }
 
             if not models_dict[model_name][field_name]["is_index"] and is_index:
                 models_dict[model_name][field_name]["index_added"] = migration_number
 
             models_dict[model_name][field_name]["is_index"] = is_index
 
-    def _map_models(self, app_dict: dict, root_path: str):
+    def _map_models(self, app_dict: dict, root_path: str, strict_mode: bool):
         """
         Re-create the models and fields from the migration files of a given app.
 
@@ -183,7 +194,7 @@ class DBIndexChecker:
                 models, create_models, migration_file[0][:4]
             )
             self._alter_fields_to_models_dict(
-                models, alter_fields, migration_file[0][:4]
+                models, alter_fields, migration_file[0][:4], strict_mode
             )
 
         return models
