@@ -59,7 +59,8 @@ class DBIndexChecker:
 
     def _get_all_relevant_operations_nodes_for_file(self, file_path):
         """Get all the classes within the operations list for a given file."""
-        relevant_nodes = []
+        create_models = []
+        alter_fields = []
 
         with open(file_path) as file:
             node = ast.parse(file.read())
@@ -76,11 +77,44 @@ class DBIndexChecker:
                     if assigns.targets[0].id != "operations":
                         continue
 
-                    return [
-                        x
-                        for x in assigns.value.elts
-                        if x.func.attr == "CreateModel" or x.func.attr == "AlterField"
+                    create_models += [
+                        x for x in assigns.value.elts if x.func.attr == "CreateModel"
                     ]
+
+                    alter_fields += [
+                        x for x in assigns.value.elts if x.func.attr == "AlterField"
+                    ]
+
+        return create_models, alter_fields
+
+    def _check_for_db_index_in_field_object(self, field_object):
+        """Check for db_index keyword in kwargs and return value."""
+        dbindex = [x.value.value for x in field_object.keywords if x.arg == "db_index"]
+        return dbindex[0] if len(dbindex) > 0 else False
+
+    def _create_models_to_models_dict(
+        self, models_dict: dict, create_models_list: list, migration_number: int
+    ):
+        """Turn a list of CreateModels classes to model dicts and add to overall dict."""
+
+        for create_model in create_models_list:
+            model_name = [
+                x.value.value for x in create_model.keywords if x.arg == "name"
+            ][0]
+            fields_list = [
+                x for x in create_model.keywords if x.arg == "fields"
+            ][0]
+
+            fields = {}
+            for field in fields_list.value.elts:
+                # This is now a list of tuples, first element is field ID, second is model class
+                index_added = self._check_for_db_index_in_field_object(field.elts[1])
+                fields[field.elts[0].value] = {
+                    "is_index": index_added,
+                    "index_added": migration_number if index_added else False,
+                }
+
+            models_dict[model_name] = fields
 
     def _map_models(self, app_dict: dict, root_path: str):
         """
@@ -108,4 +142,9 @@ class DBIndexChecker:
 
         for migration_file in app_dict["migration_files"]:
             path = os.path.join(root_path, migration_file[1])
-            nodes = self._get_all_relevant_operations_nodes_for_file(path)
+            (
+                create_models,
+                alter_fields,
+            ) = self._get_all_relevant_operations_nodes_for_file(path)
+            self._create_models_to_models_dict(models, create_models, migration_file[0][:4])
+            hello = 1
