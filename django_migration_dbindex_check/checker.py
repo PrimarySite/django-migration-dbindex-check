@@ -101,20 +101,52 @@ class DBIndexChecker:
             model_name = [
                 x.value.value for x in create_model.keywords if x.arg == "name"
             ][0]
-            fields_list = [
-                x for x in create_model.keywords if x.arg == "fields"
-            ][0]
+            fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
 
             fields = {}
             for field in fields_list.value.elts:
                 # This is now a list of tuples, first element is field ID, second is model class
                 index_added = self._check_for_db_index_in_field_object(field.elts[1])
-                fields[field.elts[0].value] = {
+                fields[field.elts[0].value.lower()] = {
                     "is_index": index_added,
                     "index_added": migration_number if index_added else False,
                 }
 
-            models_dict[model_name] = fields
+            models_dict[model_name.lower()] = fields
+
+    def _alter_fields_to_models_dict(
+        self, models_dict: dict, alter_fields_list: list, migration_number: int, strict_mode: bool
+    ):
+        """
+        Use the AlterField imstances to mutate the models_dict.
+
+        Strict mode is used here to determine whether to ignore potent
+        """
+        for alter_field in alter_fields_list:
+            model_name = [
+                x.value.value for x in alter_field.keywords if x.arg == "model_name"
+            ][0]
+            field_name = [
+                x.value.value for x in alter_field.keywords if x.arg == "name"
+            ][0]
+            field_object = [
+                x.value for x in alter_field.keywords if x.arg == "field"
+            ][0]
+            is_index = self._check_for_db_index_in_field_object(field_object)
+
+            try:
+                models_dict[model_name][field_name]
+            except KeyError:
+                if
+                raise KeyError(
+                    f"Cannot find the original model ({model_name}) or field ({field_name}) "
+                    f"which is being changed. This most likely means your migrations are broken."
+                )
+
+            if not models_dict[model_name][field_name]["is_index"] and is_index:
+                models_dict[model_name][field_name]["index_added"] = migration_number
+
+            models_dict[model_name][field_name]["is_index"] = is_index
 
     def _map_models(self, app_dict: dict, root_path: str):
         """
@@ -146,5 +178,12 @@ class DBIndexChecker:
                 create_models,
                 alter_fields,
             ) = self._get_all_relevant_operations_nodes_for_file(path)
-            self._create_models_to_models_dict(models, create_models, migration_file[0][:4])
-            hello = 1
+
+            self._create_models_to_models_dict(
+                models, create_models, migration_file[0][:4]
+            )
+            self._alter_fields_to_models_dict(
+                models, alter_fields, migration_file[0][:4]
+            )
+
+        return models
