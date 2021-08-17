@@ -5,8 +5,6 @@ import configparser
 import os, sys
 from operator import itemgetter
 
-import parso
-
 
 class DBIndexChecker:
     """Check and report on migrations with a new db_index."""
@@ -284,4 +282,9 @@ class DBIndexChecker:
                 f"in app:{error['app']}. This was added in migration {error['migration']}.",
                 file=sys.stderr
             )
+
+        if len(errors) > 0:
+            sys.exit(1)
+        else:
+            sys.exit()
 
