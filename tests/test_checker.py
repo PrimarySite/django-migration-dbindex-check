@@ -4,8 +4,8 @@ import os
 from django_migration_dbindex_check.checker import DBIndexChecker
 
 
-class TestChecker:
-    def test_walk_files(self):
+class TestWalkFiles:
+    def test_walk_files_returns_correct_files(self):
         checker = DBIndexChecker()
         result = checker._walk_files("example_migrations")
 
@@ -53,6 +53,6 @@ class TestChecker:
             },
         }
 
-    def test_map_models(self):
-        checker = DBIndexChecker()
-        checker.check_project("example_migrations")
+class TestGetAllRelevantOperations:
+    pass
+
