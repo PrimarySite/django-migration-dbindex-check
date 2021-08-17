@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+"""Main module to allow for running from cli."""
+import os
+import sys
+
 from .checker import DBIndexChecker
-import sys, os
 
 if __name__ == "__main__":
     checker = DBIndexChecker()

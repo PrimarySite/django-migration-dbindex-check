@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
 """Tests for the checker class."""
 import os
+from unittest import TestCase
 
 from django_migration_dbindex_check.checker import DBIndexChecker
 
 
-class TestWalkFiles:
+class TestWalkFiles(TestCase):
     def test_walk_files_returns_correct_files(self):
         checker = DBIndexChecker()
         result = checker._walk_files("example_migrations")
@@ -53,6 +55,8 @@ class TestWalkFiles:
             },
         }
 
-class TestGetAllRelevantOperations:
-    pass
+class TestGetAllRelevantOperations(TestCase):
+    def test_function_returns_the_correct_nodes_for_example_file(self):
+        """Should return the correct nodes """
+        pass
 

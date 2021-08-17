@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 """Checker for migrations files with a new db_index."""
 
 import ast
 import configparser
-import os, sys
+import os
+import sys
 from operator import itemgetter
 
 
@@ -12,6 +14,7 @@ class DBIndexChecker:
     def _walk_files(self, root_path: str):
         """
         Find all migrations files within the given path.
+
         Assumes that the standard django rules are followed, i.e:
          - There are a number of app folders, each containing a directory called migrations.
          - The migrations folder contains a number of .py files beginning with a four digit integer.
@@ -29,7 +32,7 @@ class DBIndexChecker:
             }
         """
         apps_list = {}
-        for root, dirs, files in os.walk(root_path):
+        for root, _dirs, files in os.walk(root_path):
             if root.split(os.sep)[-1] != "migrations":
                 continue
 
@@ -87,7 +90,7 @@ class DBIndexChecker:
         return dbindex[0] if len(dbindex) > 0 else False
 
     def _create_models_to_models_dict(
-        self, models_dict: dict, create_models_list: list, migration_number: int
+        self, models_dict: dict, create_models_list: list, migration_number: int,
     ):
         """Turn a list of CreateModels classes to model dicts and add to overall dict."""
 
@@ -156,7 +159,8 @@ class DBIndexChecker:
                 if strict_mode:
                     raise KeyError(
                         f"Cannot find the original model ({model_name}) or field ({field_name}) "
-                        f"which is being changed. This most likely means your migrations are broken."
+                        f"which is being changed. This most likely means your migrations are "
+                        f"broken.",
                     )
                 else:
                     # This is now a list of tuples, first element is field ID, second is model class
@@ -191,7 +195,7 @@ class DBIndexChecker:
         if "migration_files" not in app_dict.keys():
             raise ValueError(
                 "There are no migrations files in this app. Have you passed the "
-                "all_apps dict instead of a specific app instance?"
+                "all_apps dict instead of a specific app instance?",
             )
 
         for migration_file in app_dict["migration_files"]:
@@ -203,7 +207,7 @@ class DBIndexChecker:
 
             self._create_models_to_models_dict(models, create_models, migration_file[0][:4])
             self._alter_fields_to_models_dict(
-                models, alter_fields, migration_file[0][:4], strict_mode
+                models, alter_fields, migration_file[0][:4], strict_mode,
             )
 
         return models
@@ -224,7 +228,7 @@ class DBIndexChecker:
                             "model": model,
                             "field": field_name,
                             "migration": field["index_added"],
-                        }
+                        },
                     )
 
         return errors
@@ -240,6 +244,7 @@ class DBIndexChecker:
         return config
 
     def check_project(self, project_root_dir: str):
+        """Overarching function to check a given project directory."""
         apps = self._walk_files(project_root_dir)
         config = self.get_config(project_root_dir)
         errors = []
