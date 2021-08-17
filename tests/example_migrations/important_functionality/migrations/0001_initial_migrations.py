@@ -201,4 +201,14 @@ class Migration(migrations.Migration):
                 to="global_config.Variant", verbose_name="Variants Affected"
             ),
         ),
+        migrations.AlterField(
+            model_name="change_actual",
+            name="Variants_affected",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="wonde.WondeAccount",
+            ),
+        ),
     ]

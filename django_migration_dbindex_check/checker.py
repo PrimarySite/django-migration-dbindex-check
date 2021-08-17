@@ -60,6 +60,7 @@ class DBIndexChecker:
         """Get all the classes within the operations list for a given file."""
         create_models = []
         alter_fields = []
+        add_fields = []
 
         with open(file_path) as file:
             node = ast.parse(file.read())
@@ -70,8 +71,9 @@ class DBIndexChecker:
                 if cls.name != "Migration":
                     continue
 
-                # We're looking for two types of class, either migrations.CreateModel
-                # or migrations.AlterField. Check for both and parse each case
+                # We're looking for 3 types of class, either migrations.CreateModel,
+                # migrations.AlterField, migrations.AddField.
+                # Check for these and parse each case
                 for assigns in [n for n in cls.body if isinstance(n, ast.Assign)]:
                     if assigns.targets[0].id != "operations":
                         continue
@@ -82,7 +84,9 @@ class DBIndexChecker:
 
                     alter_fields += [x for x in assigns.value.elts if x.func.attr == "AlterField"]
 
-        return create_models, alter_fields
+                    add_fields += [x for x in assigns.value.elts if x.func.attr == "AddField"]
+
+        return create_models, alter_fields, add_fields
 
     def _check_for_db_index_in_field_object(self, field_object):
         """Check for db_index keyword in kwargs and return value."""
@@ -174,6 +178,37 @@ class DBIndexChecker:
 
             models_dict[model_name][field_name]["is_index"] = is_index
 
+    def _add_fields_to_models_dict(
+        self,
+        models_dict: dict,
+        add_fields_list: list,
+        migration_number: int,
+    ):
+        """
+        Use the AddField instances to mutate the models_dict.
+        """
+        for add_field in add_fields_list:
+            try:
+                model_name = [
+                    x.value.value for x in add_field.keywords if x.arg == "model_name"
+                ][0]
+            except AttributeError:
+                model_name = [x.value.s for x in add_field.keywords if x.arg == "model_name"][0]
+
+            try:
+                field_name = [x.value.value for x in add_field.keywords if x.arg == "name"][0]
+            except AttributeError:
+                field_name = [x.value.s for x in add_field.keywords if x.arg == "name"][0]
+
+            field_object = [x.value for x in add_field.keywords if x.arg == "field"][0]
+            is_index = self._check_for_db_index_in_field_object(field_object)
+
+            # This is now a list of tuples, first element is field ID, second is model class
+            models_dict[model_name][field_name.lower()] = {
+                "is_index": is_index,
+                "index_added": migration_number if is_index else False,
+            }
+
     def _map_models(self, app_dict: dict, root_path: str, strict_mode: bool):
         """
         Re-create the models and fields from the migration files of a given app.
@@ -203,9 +238,13 @@ class DBIndexChecker:
             (
                 create_models,
                 alter_fields,
+                add_fields,
             ) = self._get_all_relevant_operations_nodes_for_file(path)
 
             self._create_models_to_models_dict(models, create_models, migration_file[0][:4])
+            self._add_fields_to_models_dict(
+                models, alter_fields, migration_file[0][:4]
+            )
             self._alter_fields_to_models_dict(
                 models, alter_fields, migration_file[0][:4], strict_mode,
             )
