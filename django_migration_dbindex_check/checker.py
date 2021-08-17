@@ -98,22 +98,32 @@ class DBIndexChecker:
         """Turn a list of CreateModels classes to model dicts and add to overall dict."""
 
         for create_model in create_models_list:
+
+            fields = {}
             try:
                 model_name = [
                     x.value.value for x in create_model.keywords if x.arg == "name"
                 ][0]
-                fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
-            except:
-                import pdb; pdb.set_trace()
+            except AttributeError:
+                model_name = [
+                    x.value.s for x in create_model.keywords if x.arg == "name"
+                ][0]
 
-            fields = {}
+            fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
+
             for field in fields_list.value.elts:
                 # This is now a list of tuples, first element is field ID, second is model class
                 index_added = self._check_for_db_index_in_field_object(field.elts[1])
-                fields[field.elts[0].value.lower()] = {
-                    "is_index": index_added,
-                    "index_added": migration_number if index_added else False,
-                }
+                try:
+                    fields[field.elts[0].value.lower()] = {
+                        "is_index": index_added,
+                        "index_added": migration_number if index_added else False,
+                    }
+                except AttributeError:
+                    fields[field.elts[0].s.lower()] = {
+                        "is_index": index_added,
+                        "index_added": migration_number if index_added else False,
+                    }
 
             models_dict[model_name.lower()] = fields
 
@@ -135,12 +145,24 @@ class DBIndexChecker:
         Looking at you, CMS....
         """
         for alter_field in alter_fields_list:
-            model_name = [
-                x.value.value for x in alter_field.keywords if x.arg == "model_name"
-            ][0]
-            field_name = [
-                x.value.value for x in alter_field.keywords if x.arg == "name"
-            ][0]
+            try:
+                model_name = [
+                    x.value.value for x in alter_field.keywords if x.arg == "model_name"
+                ][0]
+            except AttributeError:
+                model_name = [
+                    x.value.s for x in alter_field.keywords if x.arg == "model_name"
+                ][0]
+
+            try:
+                field_name = [
+                    x.value.value for x in alter_field.keywords if x.arg == "name"
+                ][0]
+            except AttributeError:
+                field_name = [
+                    x.value.s for x in alter_field.keywords if x.arg == "name"
+                ][0]
+
             field_object = [x.value for x in alter_field.keywords if x.arg == "field"][
                 0
             ]
