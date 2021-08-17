@@ -253,6 +253,7 @@ class DBIndexChecker:
 
         # Failed reads are ignored
         full_path = os.path.join(os.getcwd(), project_root, "migrations_check.cfg")
+        print(f"Getting config from {full_path}")
         config.read(full_path)
         return config
 
