@@ -1,7 +1,7 @@
 from .checker import DBIndexChecker
 import sys, os
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     checker = DBIndexChecker()
 
     if len(sys.argv) < 2:

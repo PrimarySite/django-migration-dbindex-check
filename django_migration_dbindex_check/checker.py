@@ -47,9 +47,7 @@ class DBIndexChecker:
                 if file in [x[0] for x in apps_list[app_name]["migration_files"]]:
                     continue
 
-                apps_list[app_name]["migration_files"].append(
-                    [file, os.path.join(root, file)]
-                )
+                apps_list[app_name]["migration_files"].append([file, os.path.join(root, file)])
 
             apps_list[app_name]["migration_files"].sort(key=itemgetter(0))
 
@@ -79,9 +77,7 @@ class DBIndexChecker:
                         x for x in assigns.value.elts if x.func.attr == "CreateModel"
                     ]
 
-                    alter_fields += [
-                        x for x in assigns.value.elts if x.func.attr == "AlterField"
-                    ]
+                    alter_fields += [x for x in assigns.value.elts if x.func.attr == "AlterField"]
 
         return create_models, alter_fields
 
@@ -99,13 +95,9 @@ class DBIndexChecker:
 
             fields = {}
             try:
-                model_name = [
-                    x.value.value for x in create_model.keywords if x.arg == "name"
-                ][0]
+                model_name = [x.value.value for x in create_model.keywords if x.arg == "name"][0]
             except AttributeError:
-                model_name = [
-                    x.value.s for x in create_model.keywords if x.arg == "name"
-                ][0]
+                model_name = [x.value.s for x in create_model.keywords if x.arg == "name"][0]
 
             fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
 
@@ -148,22 +140,14 @@ class DBIndexChecker:
                     x.value.value for x in alter_field.keywords if x.arg == "model_name"
                 ][0]
             except AttributeError:
-                model_name = [
-                    x.value.s for x in alter_field.keywords if x.arg == "model_name"
-                ][0]
+                model_name = [x.value.s for x in alter_field.keywords if x.arg == "model_name"][0]
 
             try:
-                field_name = [
-                    x.value.value for x in alter_field.keywords if x.arg == "name"
-                ][0]
+                field_name = [x.value.value for x in alter_field.keywords if x.arg == "name"][0]
             except AttributeError:
-                field_name = [
-                    x.value.s for x in alter_field.keywords if x.arg == "name"
-                ][0]
+                field_name = [x.value.s for x in alter_field.keywords if x.arg == "name"][0]
 
-            field_object = [x.value for x in alter_field.keywords if x.arg == "field"][
-                0
-            ]
+            field_object = [x.value for x in alter_field.keywords if x.arg == "field"][0]
             is_index = self._check_for_db_index_in_field_object(field_object)
 
             try:
@@ -217,9 +201,7 @@ class DBIndexChecker:
                 alter_fields,
             ) = self._get_all_relevant_operations_nodes_for_file(path)
 
-            self._create_models_to_models_dict(
-                models, create_models, migration_file[0][:4]
-            )
+            self._create_models_to_models_dict(models, create_models, migration_file[0][:4])
             self._alter_fields_to_models_dict(
                 models, alter_fields, migration_file[0][:4], strict_mode
             )
@@ -263,9 +245,7 @@ class DBIndexChecker:
         errors = []
 
         for app in apps.keys():
-            models = self._map_models(
-                app_dict=apps[app], root_path=os.getcwd(), strict_mode=False
-            )
+            models = self._map_models(app_dict=apps[app], root_path=os.getcwd(), strict_mode=False)
 
             try:
                 ignore_before = config["DJANGO_MIGRATION_DBINDEX_CHECK"][app]
@@ -281,11 +261,10 @@ class DBIndexChecker:
             print(
                 f"A new db_index was added to field:{error['field']} in model:{error['model']} "
                 f"in app:{error['app']}. This was added in migration {error['migration']}.",
-                file=sys.stderr
+                file=sys.stderr,
             )
 
         if len(errors) > 0:
             sys.exit(1)
         else:
             sys.exit()
-

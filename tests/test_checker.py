@@ -42,8 +42,7 @@ class TestChecker:
                 "migration_files": [
                     [
                         "0001_initial_migrations.py",
-                        "example_migrations/the_app/"
-                        "migrations/0001_initial_migrations.py",
+                        "example_migrations/the_app/" "migrations/0001_initial_migrations.py",
                     ],
                     [
                         "0002_added_index_to_existing_field.py",
