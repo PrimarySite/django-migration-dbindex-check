@@ -104,7 +104,7 @@ class DBIndexChecker:
                 model_name = [
                     x.value.value for x in create_model.keywords if x.arg == "name"
                 ][0]
-            except:
+            except AttributeError:
                 model_name = [
                     x.value.s for x in create_model.keywords if x.arg == "name"
                 ][0]
@@ -114,10 +114,16 @@ class DBIndexChecker:
             for field in fields_list.value.elts:
                 # This is now a list of tuples, first element is field ID, second is model class
                 index_added = self._check_for_db_index_in_field_object(field.elts[1])
-                fields[field.elts[0].value.lower()] = {
-                    "is_index": index_added,
-                    "index_added": migration_number if index_added else False,
-                }
+                try:
+                    fields[field.elts[0].value.lower()] = {
+                        "is_index": index_added,
+                        "index_added": migration_number if index_added else False,
+                    }
+                except AttributeError:
+                    fields[field.elts[0].s.lower()] = {
+                        "is_index": index_added,
+                        "index_added": migration_number if index_added else False,
+                    }
 
             models_dict[model_name.lower()] = fields
 
