@@ -1,0 +1,28 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.2
+
+workflows:
+  sample:
+    jobs:
+      - build-and-test
+
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements_development.txt
+      - run:
+          name: Run tests
+          command: pytest
+      - run:
+          name: Check linting
+          command: | 
+            black -l 99 --check django_migration_dbindex_check tests
+            flake8 django_migration_dbindex_check tests
