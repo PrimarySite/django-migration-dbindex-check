@@ -145,9 +145,14 @@ class DBIndexChecker:
         Looking at you, CMS....
         """
         for alter_field in alter_fields_list:
-            model_name = [
-                x.value.value for x in alter_field.keywords if x.arg == "model_name"
-            ][0]
+            try:
+                model_name = [
+                    x.value.value for x in alter_field.keywords if x.arg == "model_name"
+                ][0]
+            except AttributeError:
+                model_name = [
+                    x.value.s for x in alter_field.keywords if x.arg == "model_name"
+                ][0]
 
             try:
                 field_name = [
