@@ -109,7 +109,7 @@ class DBIndexChecker:
                     x.value.s for x in create_model.keywords if x.arg == "name"
                 ][0]
 
-                fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
+            fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
 
             for field in fields_list.value.elts:
                 # This is now a list of tuples, first element is field ID, second is model class
