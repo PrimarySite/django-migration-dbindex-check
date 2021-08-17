@@ -148,9 +148,16 @@ class DBIndexChecker:
             model_name = [
                 x.value.value for x in alter_field.keywords if x.arg == "model_name"
             ][0]
-            field_name = [
-                x.value.value for x in alter_field.keywords if x.arg == "name"
-            ][0]
+
+            try:
+                field_name = [
+                    x.value.value for x in alter_field.keywords if x.arg == "name"
+                ][0]
+            except AttributeError:
+                field_name = [
+                    x.value.s for x in alter_field.keywords if x.arg == "name"
+                ][0]
+
             field_object = [x.value for x in alter_field.keywords if x.arg == "field"][
                 0
             ]
