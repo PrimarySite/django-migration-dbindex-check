@@ -98,10 +98,13 @@ class DBIndexChecker:
         """Turn a list of CreateModels classes to model dicts and add to overall dict."""
 
         for create_model in create_models_list:
-            model_name = [
-                x.value.value for x in create_model.keywords if x.arg == "name"
-            ][0]
-            fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
+            try:
+                model_name = [
+                    x.value.value for x in create_model.keywords if x.arg == "name"
+                ][0]
+                fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
+            except:
+                import pdb; pdb.set_trace()
 
             fields = {}
             for field in fields_list.value.elts:
