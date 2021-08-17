@@ -11,6 +11,10 @@ from django_migration_dbindex_check.checker import DBIndexChecker
 class TestWalkFiles(TestCase):
     """Tests for the _walk_files function."""
 
+    def setUp(self) -> None:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
+
     def test_walk_files_returns_correct_files(self):
         """Function should return the correct data from the sample files."""
         checker = DBIndexChecker()
@@ -68,6 +72,10 @@ class TestWalkFiles(TestCase):
 
 class TestGetAllRelevantOperations(TestCase):
     """Tests for the _get_all_relevant_operations_nodes_for_file."""
+
+    def setUp(self) -> None:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
 
     def test_function_returns_the_correct_create_model_nodes_for_example_file(self):
         """Should return the correct CreateModel nodes for the example file."""
@@ -163,7 +171,7 @@ class TestGetAllRelevantOperations(TestCase):
 
         checker = DBIndexChecker()
         create_models, alter_fields, add_fields = checker._get_all_relevant_operations_nodes_for_file(
-            "./test_specific_migrations/test_function_ignores_classes_that_are_not_migrations.py"
+            "./specific_test_migrations/function_ignores_classes_that_are_not_migrations.py"
         )
         assert len(create_models) == 1
         try:
