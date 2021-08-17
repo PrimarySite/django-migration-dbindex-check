@@ -98,15 +98,19 @@ class DBIndexChecker:
         """Turn a list of CreateModels classes to model dicts and add to overall dict."""
 
         for create_model in create_models_list:
+
+            fields = {}
             try:
                 model_name = [
                     x.value.value for x in create_model.keywords if x.arg == "name"
                 ][0]
-                fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
             except:
-                import pdb; pdb.set_trace()
+                model_name = [
+                    x.value.s for x in create_model.keywords if x.arg == "name"
+                ][0]
 
-            fields = {}
+                fields_list = [x for x in create_model.keywords if x.arg == "fields"][0]
+
             for field in fields_list.value.elts:
                 # This is now a list of tuples, first element is field ID, second is model class
                 index_added = self._check_for_db_index_in_field_object(field.elts[1])
