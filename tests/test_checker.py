@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 """Tests for the checker class."""
-import os
+from unittest import TestCase
 
 from django_migration_dbindex_check.checker import DBIndexChecker
 
 
-class TestChecker:
-    def test_walk_files(self):
+class TestWalkFiles(TestCase):
+    """Tests for the _walk_files function."""
+
+    def test_walk_files_returns_correct_files(self):
+        """Function should return the correct data from the sample files."""
         checker = DBIndexChecker()
         result = checker._walk_files("example_migrations")
 
@@ -27,7 +31,7 @@ class TestChecker:
                         "example_migrations/important_functionality/migrations/"
                         "0003_added_new_field_db_index.py",
                     ],
-                ]
+                ],
             },
             "other_service": {
                 "migration_files": [
@@ -36,7 +40,7 @@ class TestChecker:
                         "example_migrations/other_service/"
                         "migrations/0001_initial_migrations.py",
                     ],
-                ]
+                ],
             },
             "the_app": {
                 "migration_files": [
@@ -49,10 +53,14 @@ class TestChecker:
                         "example_migrations/the_app/"
                         "migrations/0002_added_index_to_existing_field.py",
                     ],
-                ]
+                ],
             },
         }
 
-    def test_map_models(self):
-        checker = DBIndexChecker()
-        checker.check_project("example_migrations")
+
+class TestGetAllRelevantOperations(TestCase):
+    """Tests for the _get_all_relevant_operations_nodes_for_file."""
+
+    def test_function_returns_the_correct_nodes_for_example_file(self):
+        """Should return the correct nodes for the example file."""
+        pass
