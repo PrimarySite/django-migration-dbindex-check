@@ -44,7 +44,6 @@ class Migration(migrations.Migration):
 class NotAMigration(migrations.Migration):
     initial = True
 
-
     dependencies = [
         ("users", "0003_auto_20200515_1309"),
         ("global_config", "0010_auto_20200623_1222"),

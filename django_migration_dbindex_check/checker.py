@@ -94,7 +94,10 @@ class DBIndexChecker:
         return dbindex[0] if len(dbindex) > 0 else False
 
     def _create_models_to_models_dict(
-        self, models_dict: dict, create_models_list: list, migration_number: int,
+        self,
+        models_dict: dict,
+        create_models_list: list,
+        migration_number: int,
     ):
         """Turn a list of CreateModels classes to model dicts and add to overall dict."""
 
@@ -169,14 +172,12 @@ class DBIndexChecker:
         add_fields_list: list,
         migration_number: int,
     ):
-        """
-        Use the AddField instances to mutate the models_dict.
-        """
+        """Use the AddField instances to mutate the models_dict."""
         for add_field in add_fields_list:
             try:
-                model_name = [
-                    x.value.value for x in add_field.keywords if x.arg == "model_name"
-                ][0]
+                model_name = [x.value.value for x in add_field.keywords if x.arg == "model_name"][
+                    0
+                ]
             except AttributeError:
                 model_name = [x.value.s for x in add_field.keywords if x.arg == "model_name"][0]
             model_name = model_name.lower()
@@ -229,11 +230,11 @@ class DBIndexChecker:
             ) = self._get_all_relevant_operations_nodes_for_file(path)
 
             self._create_models_to_models_dict(models, create_models, migration_file[0][:4])
-            self._add_fields_to_models_dict(
-                models, add_fields, migration_file[0][:4]
-            )
+            self._add_fields_to_models_dict(models, add_fields, migration_file[0][:4])
             self._alter_fields_to_models_dict(
-                models, alter_fields, migration_file[0][:4],
+                models,
+                alter_fields,
+                migration_file[0][:4],
             )
 
         return models

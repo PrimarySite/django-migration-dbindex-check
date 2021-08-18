@@ -2,10 +2,9 @@
 """Tests for the checker class."""
 import configparser
 import os
-import tempfile
+from configparser import ConfigParser
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch
-from configparser import ConfigParser
 
 from django_migration_dbindex_check.checker import DBIndexChecker
 
@@ -13,7 +12,7 @@ from django_migration_dbindex_check.checker import DBIndexChecker
 class TestWalkFiles(TestCase):
     """Tests for the _walk_files function."""
 
-    def setUp(self) -> None:
+    def setUp(self) -> None:  # noqa: D102
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(dir_path)  # Make the relative imports work
 
@@ -74,7 +73,7 @@ class TestWalkFiles(TestCase):
 class TestGetAllRelevantOperations(TestCase):
     """Tests for the _get_all_relevant_operations_nodes_for_file."""
 
-    def setUp(self) -> None:
+    def setUp(self) -> None:  # noqa: D102
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(dir_path)  # Make the relative imports work
 
@@ -86,7 +85,7 @@ class TestGetAllRelevantOperations(TestCase):
             alter_fields,
             add_fields,
         ) = checker._get_all_relevant_operations_nodes_for_file(
-            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py",
         )
 
         model_names = []
@@ -114,7 +113,7 @@ class TestGetAllRelevantOperations(TestCase):
             alter_fields,
             add_fields,
         ) = checker._get_all_relevant_operations_nodes_for_file(
-            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py",
         )
 
         model_names = []
@@ -147,7 +146,7 @@ class TestGetAllRelevantOperations(TestCase):
             alter_fields,
             add_fields,
         ) = checker._get_all_relevant_operations_nodes_for_file(
-            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py",
         )
 
         model_names = []
@@ -188,7 +187,7 @@ class TestGetAllRelevantOperations(TestCase):
             alter_fields,
             add_fields,
         ) = checker._get_all_relevant_operations_nodes_for_file(
-            "./specific_test_migrations/function_ignores_classes_that_are_not_migrations.py"
+            "./specific_test_migrations/function_ignores_classes_that_are_not_migrations.py",
         )
         assert len(create_models) == 1
         try:
@@ -199,8 +198,10 @@ class TestGetAllRelevantOperations(TestCase):
 
 
 class TestCheckForDBIndexInFieldObject(TestCase):
+    """Tests for the _check_for_db_index_in_field_object function."""
+
     def setUp(self) -> None:
-        """Create a fake field object"""
+        """Create a fake field object."""
         self.field_object = MagicMock()
         self.field_object.keywords = [
             MagicMock(value=MagicMock(value=False)),
@@ -251,7 +252,9 @@ def get_add_fields_list(file_path):
 
 
 class TestCreateModelsToModelsDict(TestCase):
-    def setUp(self) -> None:
+    """Tests for the _create_models_to_models_dict function."""
+
+    def setUp(self) -> None:  # noqa: D102
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(dir_path)  # Make the relative imports work
         self.checker = DBIndexChecker()
@@ -259,7 +262,7 @@ class TestCreateModelsToModelsDict(TestCase):
     def test_function_adds_correct_information_from_sample_file(self):
         """Function should add the correct model information from the sample migration."""
         create_models = get_create_models_list(
-            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py",
         )
         models_dict = {}
         self.checker._create_models_to_models_dict(
@@ -303,7 +306,9 @@ class TestCreateModelsToModelsDict(TestCase):
 
 
 class TestAlterFieldsToModelsDict(TestCase):
-    def setUp(self) -> None:
+    """Tests for the _alter_fields_to_models_dict function."""
+
+    def setUp(self) -> None:  # noqa: D102
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(dir_path)  # Make the relative imports work
         self.checker = DBIndexChecker()
@@ -311,7 +316,8 @@ class TestAlterFieldsToModelsDict(TestCase):
         self.checker._create_models_to_models_dict(
             self.base_models,
             get_create_models_list(
-                "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+                "./example_migrations/important_functionality/"
+                "migrations/0001_initial_migrations.py",
             ),
             1,
         )
@@ -325,7 +331,7 @@ class TestAlterFieldsToModelsDict(TestCase):
     def test_function_adds_correct_information_from_sample_file(self):
         """Function should add the correct model information from the sample migration."""
         alter_fields = self.get_alter_fields_list(
-            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py",
         )
 
         self.checker._alter_fields_to_models_dict(
@@ -341,7 +347,7 @@ class TestAlterFieldsToModelsDict(TestCase):
 
         # Switch the index off in migration 1.
         alter_fields = self.get_alter_fields_list(
-            "./specific_test_migrations/switch_db_index_off_in_alter_field.py"
+            "./specific_test_migrations/switch_db_index_off_in_alter_field.py",
         )
         self.checker._alter_fields_to_models_dict(
             models_dict=self.base_models,
@@ -351,7 +357,7 @@ class TestAlterFieldsToModelsDict(TestCase):
 
         # Switch the index on in migration 2.
         alter_fields = self.get_alter_fields_list(
-            "./specific_test_migrations/switch_db_index_on_in_alter_field.py"
+            "./specific_test_migrations/switch_db_index_on_in_alter_field.py",
         )
         self.checker._alter_fields_to_models_dict(
             models_dict=self.base_models,
@@ -367,7 +373,7 @@ class TestAlterFieldsToModelsDict(TestCase):
 
         # Switch index on in migration 1.
         alter_fields = self.get_alter_fields_list(
-            "./specific_test_migrations/switch_db_index_on_in_alter_field.py"
+            "./specific_test_migrations/switch_db_index_on_in_alter_field.py",
         )
         self.checker._alter_fields_to_models_dict(
             models_dict=self.base_models,
@@ -377,7 +383,7 @@ class TestAlterFieldsToModelsDict(TestCase):
 
         # Index remains on in migration 2.
         alter_fields = self.get_alter_fields_list(
-            "./specific_test_migrations/switch_db_index_on_in_alter_field.py"
+            "./specific_test_migrations/switch_db_index_on_in_alter_field.py",
         )
         self.checker._alter_fields_to_models_dict(
             models_dict=self.base_models,
@@ -390,7 +396,9 @@ class TestAlterFieldsToModelsDict(TestCase):
 
 
 class TestAddFieldsToModelsDict(TestCase):
-    def setUp(self) -> None:
+    """Tests for the _add_fields_to_models_dict function."""
+
+    def setUp(self) -> None:  # noqa: D102
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(dir_path)  # Make the relative imports work
         self.checker = DBIndexChecker()
@@ -398,7 +406,8 @@ class TestAddFieldsToModelsDict(TestCase):
         self.checker._create_models_to_models_dict(
             self.base_models,
             get_create_models_list(
-                "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+                "./example_migrations/important_functionality/"
+                "migrations/0001_initial_migrations.py",
             ),
             1,
         )
@@ -421,12 +430,13 @@ class TestAddFieldsToModelsDict(TestCase):
 class TestMapModels(TestCase):
     """Tests for the _map_models function."""
 
-    def setUp(self) -> None:
+    def setUp(self) -> None:  # noqa: D102
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(dir_path)  # Make the relative imports work
         self.checker = DBIndexChecker()
 
     def test_function_raises_error_if_no_migrations(self):
+        """Function should raise an error if the input doct has no migrations."""
         with self.assertRaises(ValueError) as e:
             self.checker._map_models({}, "")
         assert str(e.exception) == (
@@ -435,7 +445,8 @@ class TestMapModels(TestCase):
         )
 
     @patch(
-        "django_migration_dbindex_check.checker.DBIndexChecker._get_all_relevant_operations_nodes_for_file"
+        "django_migration_dbindex_check.checker.DBIndexChecker."
+        "_get_all_relevant_operations_nodes_for_file",
     )
     def test_function_calls_get_all_relevant_operations_with_correct_path(self, mock_get):
         """Function should call _get_relevant_operations... with all filepaths."""
@@ -445,7 +456,7 @@ class TestMapModels(TestCase):
             "migration_files": [
                 ["0001_test.py", "fake/path/0001_test.py"],
                 ["0002_test_again.py", "fake/path/0002_test_again.py"],
-            ]
+            ],
         }
         self.checker._map_models(app_dict, "/fake/root")
         calls = [
@@ -459,10 +470,14 @@ class TestMapModels(TestCase):
     @patch("django_migration_dbindex_check.checker.DBIndexChecker._create_models_to_models_dict")
     @patch(
         "django_migration_dbindex_check.checker.DBIndexChecker."
-        "_get_all_relevant_operations_nodes_for_file"
+        "_get_all_relevant_operations_nodes_for_file",
     )
     def test_function_calls_mutators_with_correct_args(
-        self, mock_get, mock_create, mock_add, mock_alter
+        self,
+        mock_get,
+        mock_create,
+        mock_add,
+        mock_alter,
     ):
         """Function should mutate a blank dict with the ops from each migration file."""
         self.checker = DBIndexChecker()  # Re-init with patch
@@ -471,7 +486,7 @@ class TestMapModels(TestCase):
             "migration_files": [
                 ["0001_test.py", "fake/path/0001_test.py"],
                 ["0002_test_again.py", "fake/path/0002_test_again.py"],
-            ]
+            ],
         }
 
         returned_models = self.checker._map_models(app_dict, "/fake/root")
@@ -547,13 +562,13 @@ class TestMapModels(TestCase):
 class TestAnalyseModels(TestCase):
     """Tests for the _analyse_models function."""
 
-    def setUp(self) -> None:
+    def setUp(self) -> None:  # noqa: D102
         self.example_app = {
             "change_actual": {
                 "test1": {"is_index": True, "index_added": "0001"},
                 "test2": {"is_index": True, "index_added": "0003"},
                 "test3": {"is_index": False, "index_added": False},
-            }
+            },
         }
         self.checker = DBIndexChecker()
 
@@ -576,7 +591,7 @@ class TestAnalyseModels(TestCase):
 class TestGetConfig(TestCase):
     """Tests for the get_config function."""
 
-    def setUp(self) -> None:
+    def setUp(self) -> None:  # noqa: D102
         dir_path = os.path.dirname(os.path.realpath(__file__))
         os.chdir(dir_path)  # Make the relative imports work
 
@@ -605,4 +620,3 @@ class TestGetConfig(TestCase):
         config = checker.get_config("not_there")
 
         assert config == configparser.ConfigParser()
-
