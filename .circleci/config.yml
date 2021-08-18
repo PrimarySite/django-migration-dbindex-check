@@ -8,7 +8,6 @@ workflows:
   sample:
     jobs:
       - build-and-test
-      - codecov/upload
 
 
 jobs:
