@@ -1,0 +1,2 @@
+[![CircleCI](https://circleci.com/gh/PrimarySite/django-migration-dbindex-check/tree/master.svg?style=svg)](https://circleci.com/gh/PrimarySite/django-migration-dbindex-check/tree/master)
+[![codecov](https://codecov.io/gh/PrimarySite/django-migration-dbindex-check/branch/master/graph/badge.svg?token=DBL4fCqCQq)](https://codecov.io/gh/PrimarySite/django-migration-dbindex-check)
