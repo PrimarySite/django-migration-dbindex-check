@@ -59,9 +59,9 @@ jobs:
           command: |
             black -l 99 --check django_migration_dbindex_check tests
             flake8 django_migration_dbindex_check tests
-      - run:
-          name: Combine the coverage files
-          command: |
-            coverage combine ~/project/saved_coverage
-            mv ~/project/saved_coverage/.coverage ~/project/.coverage
+#      - run:
+#          name: Combine the coverage files
+#          command: |
+#            coverage combine ~/project/saved_coverage
+#            mv ~/project/saved_coverage/.coverage ~/project/.coverage
       - codecov/upload
