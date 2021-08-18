@@ -45,7 +45,6 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project/saved_coverage
-      - checkout
       - python/install-packages:
           pkg-manager: pip
           pip-dependency-file: requirements_development.txt
