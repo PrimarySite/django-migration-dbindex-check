@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Tests for the checker class."""
+import configparser
 import os
-from unittest import TestCase
-from unittest.mock import MagicMock, patch, call
 import tempfile
+from unittest import TestCase
+from unittest.mock import MagicMock, call, patch
+from configparser import ConfigParser
 
 from django_migration_dbindex_check.checker import DBIndexChecker
 
@@ -226,6 +228,7 @@ class TestCheckForDBIndexInFieldObject(TestCase):
         result = checker._check_for_db_index_in_field_object(self.field_object)
         assert result is False
 
+
 def get_create_models_list(file_path):
     """Get the create models list from the _get_all_relevant... function."""
     checker = DBIndexChecker()
@@ -305,9 +308,13 @@ class TestAlterFieldsToModelsDict(TestCase):
         os.chdir(dir_path)  # Make the relative imports work
         self.checker = DBIndexChecker()
         self.base_models = {}
-        self.checker._create_models_to_models_dict(self.base_models, get_create_models_list(
-            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
-        ), 1)
+        self.checker._create_models_to_models_dict(
+            self.base_models,
+            get_create_models_list(
+                "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+            ),
+            1,
+        )
 
     def get_alter_fields_list(self, file_path):
         """Get the create models list from the _get_all_relevant... function."""
@@ -388,15 +395,17 @@ class TestAddFieldsToModelsDict(TestCase):
         os.chdir(dir_path)  # Make the relative imports work
         self.checker = DBIndexChecker()
         self.base_models = {}
-        self.checker._create_models_to_models_dict(self.base_models, get_create_models_list(
-            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
-        ), 1)
+        self.checker._create_models_to_models_dict(
+            self.base_models,
+            get_create_models_list(
+                "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+            ),
+            1,
+        )
 
     def test_function_adds_new_field_to_existing_model(self):
         """Function should add the correct model information from the sample migration."""
-        add_fields = get_add_fields_list(
-            "./specific_test_migrations/add_field_wth_db_index_on.py"
-        )
+        add_fields = get_add_fields_list("./specific_test_migrations/add_field_wth_db_index_on.py")
         self.checker._add_fields_to_models_dict(
             models_dict=self.base_models,
             add_fields_list=add_fields,
@@ -405,7 +414,7 @@ class TestAddFieldsToModelsDict(TestCase):
 
         assert self.base_models["change_actual"]["madeupfield"] == {
             "is_index": True,
-            "index_added": 4
+            "index_added": 4,
         }
 
 
@@ -417,7 +426,6 @@ class TestMapModels(TestCase):
         os.chdir(dir_path)  # Make the relative imports work
         self.checker = DBIndexChecker()
 
-
     def test_function_raises_error_if_no_migrations(self):
         with self.assertRaises(ValueError) as e:
             self.checker._map_models({}, "")
@@ -426,8 +434,11 @@ class TestMapModels(TestCase):
             "all_apps dict instead of a specific app instance?"
         )
 
-    @patch("django_migration_dbindex_check.checker.DBIndexChecker._get_all_relevant_operations_nodes_for_file")
+    @patch(
+        "django_migration_dbindex_check.checker.DBIndexChecker._get_all_relevant_operations_nodes_for_file"
+    )
     def test_function_calls_get_all_relevant_operations_with_correct_path(self, mock_get):
+        """Function should call _get_relevant_operations... with all filepaths."""
         self.checker = DBIndexChecker()  # Re-init with patch
         mock_get.return_value = [], [], []
         app_dict = {
@@ -442,3 +453,158 @@ class TestMapModels(TestCase):
             call("/fake/root/fake/path/0002_test_again.py"),
         ]
         assert mock_get.call_args_list == calls
+
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._alter_fields_to_models_dict")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._add_fields_to_models_dict")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._create_models_to_models_dict")
+    @patch(
+        "django_migration_dbindex_check.checker.DBIndexChecker."
+        "_get_all_relevant_operations_nodes_for_file"
+    )
+    def test_function_calls_mutators_with_correct_args(
+        self, mock_get, mock_create, mock_add, mock_alter
+    ):
+        """Function should mutate a blank dict with the ops from each migration file."""
+        self.checker = DBIndexChecker()  # Re-init with patch
+        mock_get.return_value = ["create_ops"], ["alter_ops"], ["add_ops"]
+        app_dict = {
+            "migration_files": [
+                ["0001_test.py", "fake/path/0001_test.py"],
+                ["0002_test_again.py", "fake/path/0002_test_again.py"],
+            ]
+        }
+
+        returned_models = self.checker._map_models(app_dict, "/fake/root")
+
+        mock_create_calls = [
+            call({}, ["create_ops"], "0001"),
+            call({}, ["create_ops"], "0002"),
+        ]
+        assert mock_create.call_args_list == mock_create_calls
+
+        mock_add_calls = [
+            call({}, ["add_ops"], "0001"),
+            call({}, ["add_ops"], "0002"),
+        ]
+        assert mock_add.call_args_list == mock_add_calls
+
+        mock_alter_calls = [
+            call({}, ["alter_ops"], "0001"),
+            call({}, ["alter_ops"], "0002"),
+        ]
+        assert mock_alter.call_args_list == mock_alter_calls
+        assert returned_models == {}
+
+    def test_integration_function_outputs_correct_data_from_sample_files(self):
+        """Function outputs the correct data from the sample migrations."""
+        root_path = "./example_migrations/important_functionality"
+        app_dict = self.checker._walk_files(root_path)
+        models_dict = self.checker._map_models(app_dict["important_functionality"], "")
+
+        assert models_dict == {
+            "change_actual": {
+                "id": {"is_index": False, "index_added": False},
+                "change_initiation_date": {"is_index": False, "index_added": False},
+                "change_description": {"is_index": False, "index_added": False},
+                "change_risk_assesment": {"is_index": False, "index_added": False},
+                "cut_in_number": {"is_index": False, "index_added": False},
+                "cut_out_number": {"is_index": False, "index_added": False},
+                "change_initiator": {"is_index": True, "index_added": "0001"},
+                "change_type": {"is_index": False, "index_added": False},
+                "lines_affected": {"is_index": False, "index_added": False},
+                "machines_affected": {"is_index": False, "index_added": False},
+                "operations_affected": {"is_index": False, "index_added": False},
+                "status": {"is_index": False, "index_added": False},
+                "variants_affected": {"is_index": False, "index_added": False},
+            },
+            "change_signoffs": {
+                "id": {"is_index": False, "index_added": False},
+                "signature_date": {"is_index": False, "index_added": False},
+                "changeover_department_required": {"is_index": False, "index_added": False},
+                "parent_change_actual": {"is_index": False, "index_added": False},
+                "signature_user": {"is_index": False, "index_added": False},
+                "signoff_pay_grade_required": {"is_index": False, "index_added": False},
+            },
+            "change_signoffs_required": {
+                "id": {"is_index": False, "index_added": False},
+                "changeover_department_required": {"is_index": False, "index_added": False},
+                "parent_change_type": {"is_index": False, "index_added": False},
+                "signoff_pay_grade_required": {"is_index": False, "index_added": False},
+            },
+            "change_status": {
+                "id": {"is_index": False, "index_added": False},
+                "status_name": {"is_index": False, "index_added": False},
+                "all_signatures_required": {"is_index": True, "index_added": "0003"},
+            },
+            "change_type": {
+                "id": {"is_index": False, "index_added": False},
+                "change_type_name": {"is_index": False, "index_added": False},
+                "change_type_description": {"is_index": False, "index_added": False},
+            },
+        }
+
+
+class TestAnalyseModels(TestCase):
+    """Tests for the _analyse_models function."""
+
+    def setUp(self) -> None:
+        self.example_app = {
+            "change_actual": {
+                "test1": {"is_index": True, "index_added": "0001"},
+                "test2": {"is_index": True, "index_added": "0003"},
+                "test3": {"is_index": False, "index_added": False},
+            }
+        }
+        self.checker = DBIndexChecker()
+
+    def test_function_returns_error_in_correct_format(self):
+        """Should return one error for each dbindex."""
+        result = self.checker._analyse_models(self.example_app)
+        assert result == [
+            {"model": "change_actual", "field": "test1", "migration": "0001"},
+            {"model": "change_actual", "field": "test2", "migration": "0003"},
+        ]
+
+    def test_function_ignores_migrations_before_specified(self):
+        """Should ignore all migrations before the specified ignore int."""
+        result = self.checker._analyse_models(self.example_app, 2)
+        assert result == [
+            {"model": "change_actual", "field": "test2", "migration": "0003"},
+        ]
+
+
+class TestGetConfig(TestCase):
+    """Tests for the get_config function."""
+
+    def setUp(self) -> None:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
+
+    @patch("django_migration_dbindex_check.checker.configparser.ConfigParser.read")
+    def test_sets_path_correctly_based_on_project_root(self, mock_read):
+        """Should look for the file in the root directory."""
+        checker = DBIndexChecker()
+        checker.get_config("abc")
+        mock_read.assert_called_once_with(
+            "/Users/jakesaunders/PycharmProjects/django-migration-dbindex-check"
+            "/tests/abc/migrations_check.cfg"
+        )
+
+    def test_reads_config_correctly(self):
+        """Function should read and return a ConfigParser object with correct settings."""
+        checker = DBIndexChecker()
+        config = checker.get_config("example_migrations")
+
+        assert isinstance(config, ConfigParser)
+
+        expected_list = [["important_functionality", 4], ["other_service", 4], ["the_app", 4]]
+        for items in expected_list:
+            assert int(config["DJANGO_MIGRATION_DBINDEX_CHECK"][items[0]]) == items[1]
+
+    def test_sends_blank_config_back_if_no_file_found(self):
+        """Test should return a blank ConfigParser if no config file found."""
+        checker = DBIndexChecker()
+        config = checker.get_config("not_there")
+
+        assert config == configparser.ConfigParser()
+

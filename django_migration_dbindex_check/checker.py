@@ -230,7 +230,7 @@ class DBIndexChecker:
 
             self._create_models_to_models_dict(models, create_models, migration_file[0][:4])
             self._add_fields_to_models_dict(
-                models, alter_fields, migration_file[0][:4]
+                models, add_fields, migration_file[0][:4]
             )
             self._alter_fields_to_models_dict(
                 models, alter_fields, migration_file[0][:4],
@@ -242,7 +242,7 @@ class DBIndexChecker:
         """
         Check for new db indices after a given migration for app.
 
-        Returns a list of errors for new indeces.
+        Returns a list of errors for new indices.
         """
         errors = []
         for model in app_dict.keys():

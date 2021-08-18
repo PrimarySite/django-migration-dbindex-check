@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False,
                 verbose_name="Are all signatures required for this status to be active?",
+                db_index=True,
             ),
-            db_index=True,
         ),
     ]
