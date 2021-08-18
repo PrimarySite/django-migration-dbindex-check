@@ -2,7 +2,7 @@
 """Tests for the checker class."""
 import os
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 import tempfile
 
 from django_migration_dbindex_check.checker import DBIndexChecker
@@ -49,8 +49,7 @@ class TestWalkFiles(TestCase):
                     ],
                     [
                         "0002_did_some_stuff.py",
-                        "example_migrations/other_service/"
-                        "migrations/0002_did_some_stuff.py",
+                        "example_migrations/other_service/" "migrations/0002_did_some_stuff.py",
                     ],
                 ],
             },
@@ -80,7 +79,11 @@ class TestGetAllRelevantOperations(TestCase):
     def test_function_returns_the_correct_create_model_nodes_for_example_file(self):
         """Should return the correct CreateModel nodes for the example file."""
         checker = DBIndexChecker()
-        create_models, alter_fields, add_fields = checker._get_all_relevant_operations_nodes_for_file(
+        (
+            create_models,
+            alter_fields,
+            add_fields,
+        ) = checker._get_all_relevant_operations_nodes_for_file(
             "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
         )
 
@@ -94,7 +97,7 @@ class TestGetAllRelevantOperations(TestCase):
             model_names.append(model_name)
 
         assert model_names == [
-            'Change_Actual',
+            "Change_Actual",
             "Change_Signoffs",
             "Change_Signoffs_Required",
             "Change_Status",
@@ -104,7 +107,11 @@ class TestGetAllRelevantOperations(TestCase):
     def test_function_returns_the_correct_alter_field_nodes_for_example_file(self):
         """Should return the correct AlterField nodes for the example file."""
         checker = DBIndexChecker()
-        create_models, alter_fields, add_fields = checker._get_all_relevant_operations_nodes_for_file(
+        (
+            create_models,
+            alter_fields,
+            add_fields,
+        ) = checker._get_all_relevant_operations_nodes_for_file(
             "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
         )
 
@@ -127,13 +134,17 @@ class TestGetAllRelevantOperations(TestCase):
             model_names.append([model_name, field_name])
 
         assert model_names == [
-            ['change_actual', "Variants_affected"],
+            ["Change_Actual", "Change_Initiator"],
         ]
 
     def test_function_returns_the_correct_add_field_nodes_for_example_file(self):
         """Should return the correct AddField nodes for the example file."""
         checker = DBIndexChecker()
-        create_models, alter_fields, add_fields = checker._get_all_relevant_operations_nodes_for_file(
+        (
+            create_models,
+            alter_fields,
+            add_fields,
+        ) = checker._get_all_relevant_operations_nodes_for_file(
             "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
         )
 
@@ -142,9 +153,9 @@ class TestGetAllRelevantOperations(TestCase):
             assert add_field.func.attr == "AddField"
 
             try:
-                model_name = [
-                    x.value.value for x in add_field.keywords if x.arg == "model_name"
-                ][0]
+                model_name = [x.value.value for x in add_field.keywords if x.arg == "model_name"][
+                    0
+                ]
             except AttributeError:
                 model_name = [x.value.s for x in add_field.keywords if x.arg == "model_name"][0]
 
@@ -156,21 +167,25 @@ class TestGetAllRelevantOperations(TestCase):
             model_names.append([model_name, field_name])
 
         assert model_names == [
-            ['change_signoffs_required', "Parent_Change_Type"],
-            ['change_signoffs_required', "Signoff_Pay_Grade_Required"],
-            ['change_actual', "Change_Type"],
-            ['change_actual', "Lines_Affected"],
-            ['change_actual', "Machines_Affected"],
-            ['change_actual', "Operations_Affected"],
-            ['change_actual', "Status"],
-            ['change_actual', "Variants_Affected"],
+            ["change_signoffs_required", "Parent_Change_Type"],
+            ["change_signoffs_required", "Signoff_Pay_Grade_Required"],
+            ["change_actual", "Change_Type"],
+            ["change_actual", "Lines_Affected"],
+            ["change_actual", "Machines_Affected"],
+            ["change_actual", "Operations_Affected"],
+            ["change_actual", "Status"],
+            ["change_actual", "Variants_Affected"],
         ]
 
     def test_function_ignores_classes_that_are_not_migrations(self):
         """If there are other classes in the file, ignore them."""
 
         checker = DBIndexChecker()
-        create_models, alter_fields, add_fields = checker._get_all_relevant_operations_nodes_for_file(
+        (
+            create_models,
+            alter_fields,
+            add_fields,
+        ) = checker._get_all_relevant_operations_nodes_for_file(
             "./specific_test_migrations/function_ignores_classes_that_are_not_migrations.py"
         )
         assert len(create_models) == 1
@@ -211,8 +226,219 @@ class TestCheckForDBIndexInFieldObject(TestCase):
         result = checker._check_for_db_index_in_field_object(self.field_object)
         assert result is False
 
+def get_create_models_list(file_path):
+    """Get the create models list from the _get_all_relevant... function."""
+    checker = DBIndexChecker()
+    create, alter, add = checker._get_all_relevant_operations_nodes_for_file(file_path)
+    return create
+
+
+def get_alter_fields_list(file_path):
+    """Get the create models list from the _get_all_relevant... function."""
+    checker = DBIndexChecker()
+    create, alter, add = checker._get_all_relevant_operations_nodes_for_file(file_path)
+    return alter
+
+
+def get_add_fields_list(file_path):
+    """Get the create models list from the _get_all_relevant... function."""
+    checker = DBIndexChecker()
+    create, alter, add = checker._get_all_relevant_operations_nodes_for_file(file_path)
+    return add
+
 
 class TestCreateModelsToModelsDict(TestCase):
-    pass
+    def setUp(self) -> None:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
+        self.checker = DBIndexChecker()
+
+    def test_function_adds_correct_information_from_sample_file(self):
+        """Function should add the correct model information from the sample migration."""
+        create_models = get_create_models_list(
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+        )
+        models_dict = {}
+        self.checker._create_models_to_models_dict(
+            models_dict=models_dict,
+            create_models_list=create_models,
+            migration_number=4,
+        )
+
+        assert models_dict == {
+            "change_actual": {
+                "id": {"is_index": False, "index_added": False},
+                "change_initiation_date": {"is_index": False, "index_added": False},
+                "change_description": {"is_index": False, "index_added": False},
+                "change_risk_assesment": {"is_index": False, "index_added": False},
+                "cut_in_number": {"is_index": False, "index_added": False},
+                "cut_out_number": {"is_index": False, "index_added": False},
+                "change_initiator": {"is_index": False, "index_added": False},
+            },
+            "change_signoffs": {
+                "id": {"is_index": False, "index_added": False},
+                "signature_date": {"is_index": False, "index_added": False},
+                "changeover_department_required": {"is_index": False, "index_added": False},
+                "parent_change_actual": {"is_index": False, "index_added": False},
+                "signature_user": {"is_index": False, "index_added": False},
+                "signoff_pay_grade_required": {"is_index": False, "index_added": False},
+            },
+            "change_signoffs_required": {
+                "id": {"is_index": False, "index_added": False},
+                "changeover_department_required": {"is_index": False, "index_added": False},
+            },
+            "change_status": {
+                "id": {"is_index": False, "index_added": False},
+                "status_name": {"is_index": False, "index_added": False},
+            },
+            "change_type": {
+                "id": {"is_index": False, "index_added": False},
+                "change_type_name": {"is_index": False, "index_added": False},
+                "change_type_description": {"is_index": False, "index_added": False},
+            },
+        }
 
 
+class TestAlterFieldsToModelsDict(TestCase):
+    def setUp(self) -> None:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
+        self.checker = DBIndexChecker()
+        self.base_models = {}
+        self.checker._create_models_to_models_dict(self.base_models, get_create_models_list(
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+        ), 1)
+
+    def get_alter_fields_list(self, file_path):
+        """Get the create models list from the _get_all_relevant... function."""
+        checker = self.checker
+        create, alter, add = checker._get_all_relevant_operations_nodes_for_file(file_path)
+        return alter
+
+    def test_function_adds_correct_information_from_sample_file(self):
+        """Function should add the correct model information from the sample migration."""
+        alter_fields = self.get_alter_fields_list(
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+        )
+
+        self.checker._alter_fields_to_models_dict(
+            models_dict=self.base_models,
+            alter_fields_list=alter_fields,
+            migration_number=1,
+        )
+
+        assert self.base_models["change_actual"]["change_initiator"]["is_index"] is True
+
+    def test_function_updates_migration_number_if_db_index_switched_on(self):
+        """If the DB index is switched on then the migration number should be updated."""
+
+        # Switch the index off in migration 1.
+        alter_fields = self.get_alter_fields_list(
+            "./specific_test_migrations/switch_db_index_off_in_alter_field.py"
+        )
+        self.checker._alter_fields_to_models_dict(
+            models_dict=self.base_models,
+            alter_fields_list=alter_fields,
+            migration_number=1,
+        )
+
+        # Switch the index on in migration 2.
+        alter_fields = self.get_alter_fields_list(
+            "./specific_test_migrations/switch_db_index_on_in_alter_field.py"
+        )
+        self.checker._alter_fields_to_models_dict(
+            models_dict=self.base_models,
+            alter_fields_list=alter_fields,
+            migration_number=2,
+        )
+
+        assert self.base_models["change_actual"]["change_initiator"]["is_index"] is True
+        assert self.base_models["change_actual"]["change_initiator"]["index_added"] == 2
+
+    def test_function_does_not_update_migration_number_if_db_index_still_on(self):
+        """If the DB index remians on then the migration number should not be updated."""
+
+        # Switch index on in migration 1.
+        alter_fields = self.get_alter_fields_list(
+            "./specific_test_migrations/switch_db_index_on_in_alter_field.py"
+        )
+        self.checker._alter_fields_to_models_dict(
+            models_dict=self.base_models,
+            alter_fields_list=alter_fields,
+            migration_number=1,
+        )
+
+        # Index remains on in migration 2.
+        alter_fields = self.get_alter_fields_list(
+            "./specific_test_migrations/switch_db_index_on_in_alter_field.py"
+        )
+        self.checker._alter_fields_to_models_dict(
+            models_dict=self.base_models,
+            alter_fields_list=alter_fields,
+            migration_number=2,
+        )
+
+        assert self.base_models["change_actual"]["change_initiator"]["is_index"] is True
+        assert self.base_models["change_actual"]["change_initiator"]["index_added"] == 1
+
+
+class TestAddFieldsToModelsDict(TestCase):
+    def setUp(self) -> None:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
+        self.checker = DBIndexChecker()
+        self.base_models = {}
+        self.checker._create_models_to_models_dict(self.base_models, get_create_models_list(
+            "./example_migrations/important_functionality/migrations/0001_initial_migrations.py"
+        ), 1)
+
+    def test_function_adds_new_field_to_existing_model(self):
+        """Function should add the correct model information from the sample migration."""
+        add_fields = get_add_fields_list(
+            "./specific_test_migrations/add_field_wth_db_index_on.py"
+        )
+        self.checker._add_fields_to_models_dict(
+            models_dict=self.base_models,
+            add_fields_list=add_fields,
+            migration_number=4,
+        )
+
+        assert self.base_models["change_actual"]["madeupfield"] == {
+            "is_index": True,
+            "index_added": 4
+        }
+
+
+class TestMapModels(TestCase):
+    """Tests for the _map_models function."""
+
+    def setUp(self) -> None:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
+        self.checker = DBIndexChecker()
+
+
+    def test_function_raises_error_if_no_migrations(self):
+        with self.assertRaises(ValueError) as e:
+            self.checker._map_models({}, "")
+        assert str(e.exception) == (
+            "There are no migrations files in this app. Have you passed the "
+            "all_apps dict instead of a specific app instance?"
+        )
+
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._get_all_relevant_operations_nodes_for_file")
+    def test_function_calls_get_all_relevant_operations_with_correct_path(self, mock_get):
+        self.checker = DBIndexChecker()  # Re-init with patch
+        mock_get.return_value = [], [], []
+        app_dict = {
+            "migration_files": [
+                ["0001_test.py", "fake/path/0001_test.py"],
+                ["0002_test_again.py", "fake/path/0002_test_again.py"],
+            ]
+        }
+        self.checker._map_models(app_dict, "/fake/root")
+        calls = [
+            call("/fake/root/fake/path/0001_test.py"),
+            call("/fake/root/fake/path/0002_test_again.py"),
+        ]
+        assert mock_get.call_args_list == calls

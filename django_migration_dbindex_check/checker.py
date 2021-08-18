@@ -129,18 +129,8 @@ class DBIndexChecker:
         models_dict: dict,
         alter_fields_list: list,
         migration_number: int,
-        strict_mode: bool,
     ):
-        """
-        Use the AlterField instances to mutate the models_dict.
-
-        Strict mode is used here to determine whether to ignore potential broken migrations.
-        If strict mode is on and we find an AlterField but there is no field in the dict,
-        this will error.
-        If strict mode is off, we'll just act as if we're creating the field from scratch.
-        This helps for older codebases where migrations may have been corrupted.
-        Looking at you, CMS....
-        """
+        """Use the AlterField instances to mutate the models_dict."""
         for alter_field in alter_fields_list:
             try:
                 model_name = [
@@ -148,11 +138,13 @@ class DBIndexChecker:
                 ][0]
             except AttributeError:
                 model_name = [x.value.s for x in alter_field.keywords if x.arg == "model_name"][0]
+            model_name = model_name.lower()
 
             try:
                 field_name = [x.value.value for x in alter_field.keywords if x.arg == "name"][0]
             except AttributeError:
                 field_name = [x.value.s for x in alter_field.keywords if x.arg == "name"][0]
+            field_name = field_name.lower()
 
             field_object = [x.value for x in alter_field.keywords if x.arg == "field"][0]
             is_index = self._check_for_db_index_in_field_object(field_object)
@@ -160,18 +152,11 @@ class DBIndexChecker:
             try:
                 models_dict[model_name][field_name]
             except KeyError:
-                if strict_mode:
-                    raise KeyError(
-                        f"Cannot find the original model ({model_name}) or field ({field_name}) "
-                        f"which is being changed. This most likely means your migrations are "
-                        f"broken.",
-                    )
-                else:
-                    # This is now a list of tuples, first element is field ID, second is model class
-                    models_dict[model_name][field_name.lower()] = {
-                        "is_index": is_index,
-                        "index_added": migration_number if is_index else False,
-                    }
+                raise KeyError(
+                    f"Cannot find the original model ({model_name}) or field ({field_name}) "
+                    f"which is being changed. This most likely means your migrations are "
+                    f"broken.",
+                )
 
             if not models_dict[model_name][field_name]["is_index"] and is_index:
                 models_dict[model_name][field_name]["index_added"] = migration_number
@@ -194,11 +179,13 @@ class DBIndexChecker:
                 ][0]
             except AttributeError:
                 model_name = [x.value.s for x in add_field.keywords if x.arg == "model_name"][0]
+            model_name = model_name.lower()
 
             try:
                 field_name = [x.value.value for x in add_field.keywords if x.arg == "name"][0]
             except AttributeError:
                 field_name = [x.value.s for x in add_field.keywords if x.arg == "name"][0]
+            field_name = field_name.lower()
 
             field_object = [x.value for x in add_field.keywords if x.arg == "field"][0]
             is_index = self._check_for_db_index_in_field_object(field_object)
@@ -209,7 +196,7 @@ class DBIndexChecker:
                 "index_added": migration_number if is_index else False,
             }
 
-    def _map_models(self, app_dict: dict, root_path: str, strict_mode: bool):
+    def _map_models(self, app_dict: dict, root_path: str):
         """
         Re-create the models and fields from the migration files of a given app.
 
@@ -246,7 +233,7 @@ class DBIndexChecker:
                 models, alter_fields, migration_file[0][:4]
             )
             self._alter_fields_to_models_dict(
-                models, alter_fields, migration_file[0][:4], strict_mode,
+                models, alter_fields, migration_file[0][:4],
             )
 
         return models

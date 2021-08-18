@@ -202,13 +202,14 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="change_actual",
-            name="Variants_affected",
+            model_name="Change_Actual",
+            name="Change_Initiator",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 to="wonde.WondeAccount",
+                db_index=True,
             ),
         ),
     ]
