@@ -585,10 +585,8 @@ class TestGetConfig(TestCase):
         """Should look for the file in the root directory."""
         checker = DBIndexChecker()
         checker.get_config("abc")
-        mock_read.assert_called_once_with(
-            "/Users/jakesaunders/PycharmProjects/django-migration-dbindex-check"
-            "/tests/abc/migrations_check.cfg"
-        )
+        expected_path = os.path.join(os.getcwd(), "abc/migrations_check.cfg")
+        mock_read.assert_called_once_with(expected_path)
 
     def test_reads_config_correctly(self):
         """Function should read and return a ConfigParser object with correct settings."""
