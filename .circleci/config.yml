@@ -64,4 +64,4 @@ jobs:
 #          command: |
 #            coverage combine ~/project/saved_coverage
 #            mv ~/project/saved_coverage/.coverage ~/project/.coverage
-      - codecov/upload
+#      - codecov/upload
