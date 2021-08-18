@@ -104,6 +104,14 @@ class DBIndexChecker:
         for create_model in create_models_list:
 
             fields = {}
+
+            # This try except exists because of a breaking change in the ast package
+            # introduced in python 3.8.
+            # https://docs.python.org/3/library/ast.html#variables
+            # As of 3.8 all variables set as string constants will be parsed as ast.Constant
+            # as opposed to ast.Str, the value is stored in Constant.value as opposed to
+            # Str.s.
+            # This can be removed when python < 3.8 support is no longer required.
             try:
                 model_name = [x.value.value for x in create_model.keywords if x.arg == "name"][0]
             except AttributeError:
@@ -135,6 +143,13 @@ class DBIndexChecker:
     ):
         """Use the AlterField instances to mutate the models_dict."""
         for alter_field in alter_fields_list:
+            # This try except exists because of a breaking change in the ast package
+            # introduced in python 3.8.
+            # https://docs.python.org/3/library/ast.html#variables
+            # As of 3.8 all variables set as string constants will be parsed as ast.Constant
+            # as opposed to ast.Str, the value is stored in Constant.value as opposed to
+            # Str.s.
+            # This can be removed when python < 3.8 support is no longer required.
             try:
                 model_name = [
                     x.value.value for x in alter_field.keywords if x.arg == "model_name"
@@ -174,6 +189,13 @@ class DBIndexChecker:
     ):
         """Use the AddField instances to mutate the models_dict."""
         for add_field in add_fields_list:
+            # This try except exists because of a breaking change in the ast package
+            # introduced in python 3.8.
+            # https://docs.python.org/3/library/ast.html#variables
+            # As of 3.8 all variables set as string constants will be parsed as ast.Constant
+            # as opposed to ast.Str, the value is stored in Constant.value as opposed to
+            # Str.s.
+            # This can be removed when python < 3.8 support is no longer required.
             try:
                 model_name = [x.value.value for x in add_field.keywords if x.arg == "model_name"][
                     0

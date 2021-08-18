@@ -7,24 +7,61 @@ orbs:
 workflows:
   sample:
     jobs:
-      - build-and-test
+      - build-and-test-py37
+      - build-and-test-py39:
+          requires:
+            - build-and-test-py37
+
+# We need to build both a python 3.7 image and a python 3.9 image
+# due to a breaking change in the ast package. This ensures full
+# coverage. See notes in checker.py.
+# Remove 3.7 when <=3.8 no longer required.
 
 
 jobs:
-  build-and-test:
+  build-and-test-py37:
+    docker:
+      - image: cimg/python:3.7
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements_development.txt
+      - run: mkdir saved_coverage
+      - run:
+          name: Run tests
+          command: |
+            pytest --cov
+            mv .coverage saved_coverage/.coverage.py37
+      - persist_to_workspace:
+          root: ~/project/saved_coverage
+          paths:
+            - ./*
+
+
+  build-and-test-py39:
     docker:
       - image: cimg/python:3.9
     steps:
+      - attach_workspace:
+          at: ~/project/saved_coverage
       - checkout
       - python/install-packages:
           pkg-manager: pip
           pip-dependency-file: requirements_development.txt
       - run:
           name: Run tests
-          command: pytest --cov
+          command: |
+            pytest --cov
+            mv .coverage saved_coverage/.coverage.py39
       - run:
           name: Check linting
-          command: | 
+          command: |
             black -l 99 --check django_migration_dbindex_check tests
             flake8 django_migration_dbindex_check tests
+      - run:
+          name: Combine the coverage files
+          command: |
+            coverage combine ~/project/saved_coverage
+            mv ~/project/saved_coverage/.coverage ~/project/.coverage
       - codecov/upload
