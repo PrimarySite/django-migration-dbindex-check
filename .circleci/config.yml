@@ -21,7 +21,7 @@ jobs:
           pip-dependency-file: requirements_development.txt
       - run:
           name: Run tests
-          command: pytest
+          command: pytest --cov
       - run:
           name: Check linting
           command: | 
