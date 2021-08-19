@@ -638,6 +638,10 @@ class TestGetConfig(TestCase):
 class TestCheckProject(TestCase):
     """Tests for the check_project function."""
 
+    def setUp(self) -> None:  # noqa: D102
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        os.chdir(dir_path)  # Make the relative imports work
+
     @patch("django_migration_dbindex_check.checker.sys.exit")
     @patch("django_migration_dbindex_check.checker.DBIndexChecker._walk_files")
     def test_function_calls_walk_files_with_given_root_dir(self, mock_walk, mock_exit):
