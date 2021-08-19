@@ -706,14 +706,14 @@ class TestCheckProject(TestCase):
                     ],
                     [
                         "0002_did_some_stuff.py",
-                        "example_migrations/other_service/migrations/"
-                        "0002_did_some_stuff.py",
+                        "example_migrations/other_service/migrations/" "0002_did_some_stuff.py",
                     ],
                 ],
             },
         ]
         dict_call_args_list = [x[1]["app_dict"] for x in mock_map.call_args_list]
-        assert dict_call_args_list == expected_dict_args
+        for items in expected_dict_args:
+            assert items in dict_call_args_list
         root_paths = [x[1]["root_path"] for x in mock_map.call_args_list]
         for paths in root_paths:
             assert paths == os.getcwd()
@@ -731,7 +731,10 @@ class TestCheckProject(TestCase):
     @patch("django_migration_dbindex_check.checker.sys.exit")
     @patch("django_migration_dbindex_check.checker.DBIndexChecker._analyse_models")
     def test_function_does_not_ignore_migrations_if_no_config(
-        self, mock_analyse, mock_exit, mock_config,
+        self,
+        mock_analyse,
+        mock_exit,
+        mock_config,
     ):
         """Function should report indices from all migrations if no config found."""
         checker = DBIndexChecker()
