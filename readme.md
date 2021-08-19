@@ -32,4 +32,35 @@ or
 
 1. python -m django-migration-db-index-checker <your_root_path>
 
-The script will then output a list of offending migrations as per this example:
+The script will then output a list of offending migrations or stderr as per this example:
+
+`A new db_index was added to field:<offending_field> in model:<offending_model> in 
+app:<offending_app>. This was added in migration <offending_migration>.`
+
+The script will exit with a non-zero status code if a new db_index has been found.
+
+
+###Ignoring Migrations
+Once you've been warned about the issue, you won't want your CI checks to fail forever.
+There are two ways to ignore migrations. 
+
+In your projects root, create a file called `migrations_check.cfg` following the example below.
+
+```
+[DJANGO_MIGRATION_DBINDEX_CHECK]
+important_functionality = 4
+other_service = 4
+the_app = 4
+
+exclude_paths=
+    venv,
+    some/other/path
+```
+
+In the top section, each variable represents an app name and the number assigned is the migration 
+number ignore up to. So in this example, all migrations for the app `important_functionality`
+will be ignored up to (but not including) `0004_my_migration.py`.
+
+It's also common to want to ignore entire directories (for example your venv folder), to do this 
+add your directory path to the `exclude_paths` variable. Note that this will check for each 
+string anywhere in the filepath so be specific.
