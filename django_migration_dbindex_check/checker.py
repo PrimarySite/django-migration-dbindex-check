@@ -47,9 +47,6 @@ class DBIndexChecker:
                 except ValueError:
                     continue
 
-                if file in [x[0] for x in apps_list[app_name]["migration_files"]]:
-                    continue
-
                 apps_list[app_name]["migration_files"].append([file, os.path.join(root, file)])
 
             apps_list[app_name]["migration_files"].sort(key=itemgetter(0))
@@ -104,6 +101,14 @@ class DBIndexChecker:
         for create_model in create_models_list:
 
             fields = {}
+
+            # This try except exists because of a breaking change in the ast package
+            # introduced in python 3.8.
+            # https://docs.python.org/3/library/ast.html#variables
+            # As of 3.8 all variables set as string constants will be parsed as ast.Constant
+            # as opposed to ast.Str, the value is stored in Constant.value as opposed to
+            # Str.s.
+            # This can be removed when python < 3.8 support is no longer required.
             try:
                 model_name = [x.value.value for x in create_model.keywords if x.arg == "name"][0]
             except AttributeError:
@@ -135,6 +140,13 @@ class DBIndexChecker:
     ):
         """Use the AlterField instances to mutate the models_dict."""
         for alter_field in alter_fields_list:
+            # This try except exists because of a breaking change in the ast package
+            # introduced in python 3.8.
+            # https://docs.python.org/3/library/ast.html#variables
+            # As of 3.8 all variables set as string constants will be parsed as ast.Constant
+            # as opposed to ast.Str, the value is stored in Constant.value as opposed to
+            # Str.s.
+            # This can be removed when python < 3.8 support is no longer required.
             try:
                 model_name = [
                     x.value.value for x in alter_field.keywords if x.arg == "model_name"
@@ -174,6 +186,13 @@ class DBIndexChecker:
     ):
         """Use the AddField instances to mutate the models_dict."""
         for add_field in add_fields_list:
+            # This try except exists because of a breaking change in the ast package
+            # introduced in python 3.8.
+            # https://docs.python.org/3/library/ast.html#variables
+            # As of 3.8 all variables set as string constants will be parsed as ast.Constant
+            # as opposed to ast.Str, the value is stored in Constant.value as opposed to
+            # Str.s.
+            # This can be removed when python < 3.8 support is no longer required.
             try:
                 model_name = [x.value.value for x in add_field.keywords if x.arg == "model_name"][
                     0
@@ -277,7 +296,7 @@ class DBIndexChecker:
         errors = []
 
         for app in apps.keys():
-            models = self._map_models(app_dict=apps[app], root_path=os.getcwd(), strict_mode=False)
+            models = self._map_models(app_dict=apps[app], root_path=os.getcwd())
 
             try:
                 ignore_before = config["DJANGO_MIGRATION_DBINDEX_CHECK"][app]

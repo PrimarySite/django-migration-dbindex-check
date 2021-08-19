@@ -5,7 +5,7 @@ orbs:
   codecov: codecov/codecov@1.2.5
 
 workflows:
-  sample:
+  build-and-test:
     jobs:
       - build-and-test
 
@@ -21,10 +21,11 @@ jobs:
           pip-dependency-file: requirements_development.txt
       - run:
           name: Run tests
-          command: pytest --cov
+          command: |
+            pytest --cov
       - run:
           name: Check linting
-          command: | 
+          command: |
             black -l 99 --check django_migration_dbindex_check tests
             flake8 django_migration_dbindex_check tests
       - codecov/upload
