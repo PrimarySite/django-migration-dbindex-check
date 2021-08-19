@@ -70,7 +70,6 @@ class TestWalkFiles(TestCase):
         }
 
 
-
 class TestGetAllRelevantOperations(TestCase):
     """Tests for the _get_all_relevant_operations_nodes_for_file."""
 
@@ -657,7 +656,7 @@ class TestCheckProject(TestCase):
         """Function should call get_config with the specified root dir."""
         checker = DBIndexChecker()
         checker.check_project("my_root")
-        mock_config.assert_called_once_with("my_root")
+        mock_config.assert_called_with("my_root")
 
     @patch("django_migration_dbindex_check.checker.sys.exit")
     @patch("django_migration_dbindex_check.checker.DBIndexChecker._map_models")
@@ -767,7 +766,7 @@ class TestCheckProject(TestCase):
         ]
 
         calls = [x[0][0] for x in mock_print.call_args_list]
-        calls.pop(0)
+        calls = [x for x in calls if "Getting config" not in x]
         assert calls == expected_prints
 
     @patch("django_migration_dbindex_check.checker.sys.exit")

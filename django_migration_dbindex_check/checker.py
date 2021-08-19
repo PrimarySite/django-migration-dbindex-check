@@ -32,8 +32,11 @@ class DBIndexChecker:
             }
         """
         config = self.get_config(root_path)
-        exclude_paths = config["DJANGO_MIGRATION_DBINDEX_CHECK"]["exclude_paths"]
-        exclude_paths = [x.strip() for x in exclude_paths.split(",")]
+        try:
+            exclude_paths = config["DJANGO_MIGRATION_DBINDEX_CHECK"]["exclude_paths"]
+            exclude_paths = [x.strip() for x in exclude_paths.split(",")]
+        except KeyError:
+            exclude_paths = []
 
         apps_list = {}
         for root, _dirs, files in os.walk(root_path):
