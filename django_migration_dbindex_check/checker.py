@@ -35,6 +35,7 @@ class DBIndexChecker:
         try:
             exclude_paths = config["DJANGO_MIGRATION_DBINDEX_CHECK"]["exclude_paths"]
             exclude_paths = [x.strip() for x in exclude_paths.split(",")]
+            exclude_paths = [x for x in exclude_paths if x != ""]
         except KeyError:
             exclude_paths = []
 
