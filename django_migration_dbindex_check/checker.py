@@ -31,8 +31,19 @@ class DBIndexChecker:
                 }
             }
         """
+        config = self.get_config(root_path)
+        exclude_paths = config["DJANGO_MIGRATION_DBINDEX_CHECK"]["exclude_paths"]
+        exclude_paths = [x.strip() for x in exclude_paths.split(",")]
+
         apps_list = {}
         for root, _dirs, files in os.walk(root_path):
+            path_in_exclude = False
+            for path in exclude_paths:
+                if path in root:
+                    path_in_exclude = True
+            if path_in_exclude:
+                continue
+
             if root.split(os.sep)[-1] != "migrations":
                 continue
 

@@ -70,6 +70,7 @@ class TestWalkFiles(TestCase):
         }
 
 
+
 class TestGetAllRelevantOperations(TestCase):
     """Tests for the _get_all_relevant_operations_nodes_for_file."""
 
