@@ -47,9 +47,6 @@ class DBIndexChecker:
                 except ValueError:
                     continue
 
-                if file in [x[0] for x in apps_list[app_name]["migration_files"]]:
-                    continue
-
                 apps_list[app_name]["migration_files"].append([file, os.path.join(root, file)])
 
             apps_list[app_name]["migration_files"].sort(key=itemgetter(0))
@@ -299,7 +296,7 @@ class DBIndexChecker:
         errors = []
 
         for app in apps.keys():
-            models = self._map_models(app_dict=apps[app], root_path=os.getcwd(), strict_mode=False)
+            models = self._map_models(app_dict=apps[app], root_path=os.getcwd())
 
             try:
                 ignore_before = config["DJANGO_MIGRATION_DBINDEX_CHECK"][app]

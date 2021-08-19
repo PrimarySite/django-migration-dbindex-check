@@ -323,7 +323,7 @@ class TestAlterFieldsToModelsDict(TestCase):
         )
 
     def get_alter_fields_list(self, file_path):
-        """Get the create models list from the _get_all_relevant... function."""
+        """Get the alter fields list from the _get_all_relevant... function."""
         checker = self.checker
         create, alter, add = checker._get_all_relevant_operations_nodes_for_file(file_path)
         return alter
@@ -394,6 +394,16 @@ class TestAlterFieldsToModelsDict(TestCase):
         assert self.base_models["change_actual"]["change_initiator"]["is_index"] is True
         assert self.base_models["change_actual"]["change_initiator"]["index_added"] == 1
 
+    def test_keyerror_raised_if_field_or_model_does_not_exist(self):
+        """Function should raise an error if the model or field has not already been parsed."""
+        alter = self.get_alter_fields_list(
+            "specific_test_migrations/alter_a_non_existant_field.py",
+        )
+        with self.assertRaises(KeyError) as e:
+            self.checker._alter_fields_to_models_dict(self.base_models, alter, 2)
+        assert "change_status" in str(e.exception)
+        assert "fake_field" in str(e.exception)
+
 
 class TestAddFieldsToModelsDict(TestCase):
     """Tests for the _add_fields_to_models_dict function."""
@@ -425,6 +435,49 @@ class TestAddFieldsToModelsDict(TestCase):
             "is_index": True,
             "index_added": 4,
         }
+
+
+important_functionality_models_list = {
+    "change_actual": {
+        "id": {"is_index": False, "index_added": False},
+        "change_initiation_date": {"is_index": False, "index_added": False},
+        "change_description": {"is_index": False, "index_added": False},
+        "change_risk_assesment": {"is_index": False, "index_added": False},
+        "cut_in_number": {"is_index": False, "index_added": False},
+        "cut_out_number": {"is_index": False, "index_added": False},
+        "change_initiator": {"is_index": True, "index_added": "0001"},
+        "change_type": {"is_index": False, "index_added": False},
+        "lines_affected": {"is_index": False, "index_added": False},
+        "machines_affected": {"is_index": False, "index_added": False},
+        "operations_affected": {"is_index": False, "index_added": False},
+        "status": {"is_index": False, "index_added": False},
+        "variants_affected": {"is_index": False, "index_added": False},
+    },
+    "change_signoffs": {
+        "id": {"is_index": False, "index_added": False},
+        "signature_date": {"is_index": False, "index_added": False},
+        "changeover_department_required": {"is_index": False, "index_added": False},
+        "parent_change_actual": {"is_index": False, "index_added": False},
+        "signature_user": {"is_index": False, "index_added": False},
+        "signoff_pay_grade_required": {"is_index": False, "index_added": False},
+    },
+    "change_signoffs_required": {
+        "id": {"is_index": False, "index_added": False},
+        "changeover_department_required": {"is_index": False, "index_added": False},
+        "parent_change_type": {"is_index": False, "index_added": False},
+        "signoff_pay_grade_required": {"is_index": False, "index_added": False},
+    },
+    "change_status": {
+        "id": {"is_index": False, "index_added": False},
+        "status_name": {"is_index": False, "index_added": False},
+        "all_signatures_required": {"is_index": True, "index_added": "0003"},
+    },
+    "change_type": {
+        "id": {"is_index": False, "index_added": False},
+        "change_type_name": {"is_index": False, "index_added": False},
+        "change_type_description": {"is_index": False, "index_added": False},
+    },
+}
 
 
 class TestMapModels(TestCase):
@@ -516,47 +569,7 @@ class TestMapModels(TestCase):
         app_dict = self.checker._walk_files(root_path)
         models_dict = self.checker._map_models(app_dict["important_functionality"], "")
 
-        assert models_dict == {
-            "change_actual": {
-                "id": {"is_index": False, "index_added": False},
-                "change_initiation_date": {"is_index": False, "index_added": False},
-                "change_description": {"is_index": False, "index_added": False},
-                "change_risk_assesment": {"is_index": False, "index_added": False},
-                "cut_in_number": {"is_index": False, "index_added": False},
-                "cut_out_number": {"is_index": False, "index_added": False},
-                "change_initiator": {"is_index": True, "index_added": "0001"},
-                "change_type": {"is_index": False, "index_added": False},
-                "lines_affected": {"is_index": False, "index_added": False},
-                "machines_affected": {"is_index": False, "index_added": False},
-                "operations_affected": {"is_index": False, "index_added": False},
-                "status": {"is_index": False, "index_added": False},
-                "variants_affected": {"is_index": False, "index_added": False},
-            },
-            "change_signoffs": {
-                "id": {"is_index": False, "index_added": False},
-                "signature_date": {"is_index": False, "index_added": False},
-                "changeover_department_required": {"is_index": False, "index_added": False},
-                "parent_change_actual": {"is_index": False, "index_added": False},
-                "signature_user": {"is_index": False, "index_added": False},
-                "signoff_pay_grade_required": {"is_index": False, "index_added": False},
-            },
-            "change_signoffs_required": {
-                "id": {"is_index": False, "index_added": False},
-                "changeover_department_required": {"is_index": False, "index_added": False},
-                "parent_change_type": {"is_index": False, "index_added": False},
-                "signoff_pay_grade_required": {"is_index": False, "index_added": False},
-            },
-            "change_status": {
-                "id": {"is_index": False, "index_added": False},
-                "status_name": {"is_index": False, "index_added": False},
-                "all_signatures_required": {"is_index": True, "index_added": "0003"},
-            },
-            "change_type": {
-                "id": {"is_index": False, "index_added": False},
-                "change_type_name": {"is_index": False, "index_added": False},
-                "change_type_description": {"is_index": False, "index_added": False},
-            },
-        }
+        assert models_dict == important_functionality_models_list
 
 
 class TestAnalyseModels(TestCase):
@@ -620,3 +633,149 @@ class TestGetConfig(TestCase):
         config = checker.get_config("not_there")
 
         assert config == configparser.ConfigParser()
+
+
+class TestCheckProject(TestCase):
+    """Tests for the check_project function."""
+
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._walk_files")
+    def test_function_calls_walk_files_with_given_root_dir(self, mock_walk, mock_exit):
+        """Function should call walk files with the specified root dir."""
+        checker = DBIndexChecker()
+        checker.check_project("my_root")
+        mock_walk.assert_called_once_with("my_root")
+
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker.get_config")
+    def test_function_calls_get_config_with_given_root_dir(self, mock_config, mock_exit):
+        """Function should call get_config with the specified root dir."""
+        checker = DBIndexChecker()
+        checker.check_project("my_root")
+        mock_config.assert_called_once_with("my_root")
+
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._map_models")
+    def test_function_calls_map_models_with_each_found_file(self, mock_map, mock_exit):
+        """Function should call _map_models with each found migration file location."""
+        checker = DBIndexChecker()
+        checker.check_project("example_migrations")
+        expected_dict_args = [
+            {
+                "migration_files": [
+                    [
+                        "0001_initial_migrations.py",
+                        "example_migrations/important_functionality/migrations/"
+                        "0001_initial_migrations.py",
+                    ],
+                    [
+                        "0002_renamed_a_field.py",
+                        "example_migrations/important_functionality/migrations/"
+                        "0002_renamed_a_field.py",
+                    ],
+                    [
+                        "0003_added_new_field_db_index.py",
+                        "example_migrations/important_functionality/migrations/"
+                        "0003_added_new_field_db_index.py",
+                    ],
+                ],
+            },
+            {
+                "migration_files": [
+                    [
+                        "0001_initial_migrations.py",
+                        "example_migrations/the_app/migrations/0001_initial_migrations.py",
+                    ],
+                    [
+                        "0002_added_index_to_existing_field.py",
+                        "example_migrations/the_app/migrations/"
+                        "0002_added_index_to_existing_field.py",
+                    ],
+                ],
+            },
+            {
+                "migration_files": [
+                    [
+                        "0001_initial_migrations.py",
+                        "example_migrations/other_service/migrations/"
+                        "0001_initial_migrations.py",
+                    ],
+                    [
+                        "0002_did_some_stuff.py",
+                        "example_migrations/other_service/migrations/"
+                        "0002_did_some_stuff.py",
+                    ],
+                ],
+            },
+        ]
+        dict_call_args_list = [x[1]["app_dict"] for x in mock_map.call_args_list]
+        assert dict_call_args_list == expected_dict_args
+        root_paths = [x[1]["root_path"] for x in mock_map.call_args_list]
+        for paths in root_paths:
+            assert paths == os.getcwd()
+
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._analyse_models")
+    def test_function_calls_analyse_models_with_all_found_models(self, mock_analyse, mock_exit):
+        """Function should call _analyse_models with all models found from migration files."""
+        checker = DBIndexChecker()
+        checker.check_project("example_migrations/important_functionality")
+        mock_analyse.assert_called_once()
+        assert mock_analyse.call_args_list[0][0][0] == important_functionality_models_list
+
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker.get_config")
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._analyse_models")
+    def test_function_does_not_ignore_migrations_if_no_config(
+        self, mock_analyse, mock_exit, mock_config,
+    ):
+        """Function should report indices from all migrations if no config found."""
+        checker = DBIndexChecker()
+        mock_config.return_value = {}
+        checker.check_project("example_migrations/important_functionality")
+        mock_analyse.assert_called_once()
+        assert mock_analyse.call_args_list[0][0][1] == 0
+
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._analyse_models")
+    def test_function_honors_ignore_migrations_config(self, mock_analyse, mock_exit):
+        """Function should honor ignore migration files config."""
+        checker = DBIndexChecker()
+        checker.check_project("example_migrations")
+        assert mock_analyse.call_args_list[0][0][1] == 4
+
+    @patch("django_migration_dbindex_check.checker.print")
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    def test_function_prints_all_found_errors(self, mock_exit, mock_print):
+        """Function should print all found indices to sys.stderr."""
+        checker = DBIndexChecker()
+        checker.check_project("example_migrations/important_functionality")
+
+        expected_prints = [
+            "A new db_index was added to field:change_initiator in model:change_actual in app:"
+            "important_functionality. This was added in migration 0001.",
+            "A new db_index was added to field:all_signatures_required in model:change_status"
+            " in app:important_functionality. This was added in migration 0003.",
+        ]
+
+        calls = [x[0][0] for x in mock_print.call_args_list]
+        calls.pop(0)
+        assert calls == expected_prints
+
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    def test_function_exists_with_error_code_1_if_errors(self, mock_exit):
+        """Function should exit with error code 1 (for CI check) if indices found."""
+        checker = DBIndexChecker()
+        checker.check_project("example_migrations/important_functionality")
+
+        mock_exit.assert_called_with(1)
+
+    @patch("django_migration_dbindex_check.checker.DBIndexChecker._analyse_models")
+    @patch("django_migration_dbindex_check.checker.sys.exit")
+    def test_function_exists_with_error_code_0_if_no_errors(self, mock_exit, mock_analyse):
+        """Function should exit with error code 0 (for CI check) if no indices found."""
+        checker = DBIndexChecker()
+        mock_analyse.return_value = []
+        checker.check_project("example_migrations/important_functionality")
+
+        mock_exit.assert_called_with()
