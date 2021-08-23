@@ -1,4 +1,4 @@
-# Django-migration-dbindex-checker
+# Django-migration-dbindex-check
 [![CircleCI](https://circleci.com/gh/PrimarySite/django-migration-dbindex-check/tree/master.svg?style=svg)](https://circleci.com/gh/PrimarySite/django-migration-dbindex-check/tree/master)
 [![codecov](https://codecov.io/gh/PrimarySite/django-migration-dbindex-check/branch/master/graph/badge.svg?token=DBL4fCqCQq)](https://codecov.io/gh/PrimarySite/django-migration-dbindex-check)
 
@@ -18,21 +18,21 @@ use Postgres' CONCURRENTLY feature or schedule downtime.
 
 
 ## Installation
-Install from pypi - `pip install django-migration-db-index-checker`
+Install from pypi - `pip install django-migration-dbindex-check`
 
-Install from git repo - `pip install -e git+https://github.com/JakeLSaunders94/django-migration-dbindex-check.git#egg=django-migration-dbindex-check`
+Install from git repo - `pip install -e git+https://github.com/PrimarySite/django-migration-dbindex-check.git#egg=django-migration-dbindex-check`
 
 
 ## Usage
 The package is designed to be used from the command line:
 1. Activate your virtualenv if required.
 2. Navigate to your projects root folder.
-3. `python -m django-migration-db-index-checker`
+3. `python -m django-migration-db-index-check`
 
 or 
 
 1. Activate your virtualenv if required.
-2. `python -m django-migration-db-index-checker <your_root_path>`
+2. `python -m django-migration-db-index-check <your_root_path>`
 
 The script will then output a list of offending migrations or stderr as per this example:
 
